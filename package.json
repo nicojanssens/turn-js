@@ -1,0 +1,29 @@
+{
+  "name": "libturn",
+  "version": "0.0.1",
+  "description": "TURN (Traversal Using Relay NAT) library written entirely in JavaScript",
+  "main": "index.js",
+  "keywords": [
+    "udp",
+    "nat",
+    "stun",
+    "turn"
+  ],
+  "author": "Nico Janssens <nico.b.janssens@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "ip": "*",
+    "merge": "*",
+    "q": "*",
+    "winston": "*"
+  },
+  "devDependencies": {
+    "chai": "*",
+    "chai-as-promised": "*",
+    "mocha": "*",
+    "yargs": "*"
+  },
+  "scripts": {
+    "test": "./node_modules/.bin/mocha test/*.unit.js"
+  }
+}
