@@ -9,7 +9,10 @@
     "stun",
     "turn"
   ],
-  "author": "Nico Janssens <nico.b.janssens@gmail.com>",
+  "author": {
+    "name": "Nico Janssens",
+    "email": "nico.b.janssens@gmail.com"
+  },
   "license": "MIT",
   "dependencies": {
     "ip": "*",
@@ -22,6 +25,10 @@
     "chai-as-promised": "*",
     "mocha": "*",
     "yargs": "*"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/nicojanssens/libturn.git"
   },
   "scripts": {
     "test": "./node_modules/.bin/mocha test/*.unit.js"
