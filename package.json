@@ -1,6 +1,6 @@
 {
   "name": "libturn",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "TURN (Traversal Using Relay NAT) library written entirely in JavaScript",
   "main": "index.js",
   "keywords": [
