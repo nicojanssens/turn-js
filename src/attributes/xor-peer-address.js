@@ -1,4 +1,4 @@
-var addressAttr = require('./address')
+var addressAttr = require('libstun').address
 var winston = require('winston')
 
 var XORPeerAddressAttr = function (address, port) {

@@ -4,10 +4,9 @@
   "description": "TURN (Traversal Using Relay NAT) library written entirely in JavaScript",
   "main": "index.js",
   "keywords": [
-    "udp",
     "nat",
-    "stun",
-    "turn"
+    "turn",
+    "udp"
   ],
   "author": {
     "name": "Nico Janssens",
@@ -15,7 +14,7 @@
   },
   "license": "MIT",
   "dependencies": {
-    "ip": "*",
+    "libstun": "0.1.0",
     "merge": "*",
     "q": "*",
     "winston": "*"

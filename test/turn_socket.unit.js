@@ -1,4 +1,4 @@
-var TurnSession = require('../src/turn_session')
+var TurnSocket = require('../src/turn_socket')
 var winston = require('winston')
 
 var chai = require('chai')
@@ -42,8 +42,8 @@ describe('#TURN operations', function () {
   this.timeout(5000)
 
   it('should execute TURN allocate operation (using promises)', function () {
-    var session = new TurnSession(testAddr, testPort, testUser, testPwd)
-    return session.allocateP()
+    var socket = new TurnSocket(testAddr, testPort, testUser, testPwd)
+    return socket.allocateP()
       .then(function (result) {
         expect(result).not.to.be.undefined
         expect(result).to.have.property('mappedAddress')
@@ -54,12 +54,12 @@ describe('#TURN operations', function () {
         expect(result.relayedAddress).to.have.property('address')
         expect(result.relayedAddress).to.have.property('port')
         expect(result.relayedAddress.address).to.equal(testAddr)
-        return session.closeP()
+        return socket.closeP()
       })
   })
 
   it('should execute TURN allocate operation (using callbacks)', function (done) {
-    var session = new TurnSession(testAddr, testPort, testUser, testPwd)
+    var socket = new TurnSocket(testAddr, testPort, testUser, testPwd)
 
     var onError = function (error) {
       done(error)
@@ -75,7 +75,7 @@ describe('#TURN operations', function () {
       expect(result.relayedAddress).to.have.property('address')
       expect(result.relayedAddress).to.have.property('port')
       expect(result.relayedAddress.address).to.equal(testAddr)
-      session.close(
+      socket.close(
         function () {
           done()
         },
@@ -83,32 +83,32 @@ describe('#TURN operations', function () {
       )
     }
 
-    session.allocate(onReady, onError)
+    socket.allocate(onReady, onError)
   })
 
   it('should execute TURN allocate followed by refresh (using promises)', function () {
-    var session = new TurnSession(testAddr, testPort, testUser, testPwd)
+    var socket = new TurnSocket(testAddr, testPort, testUser, testPwd)
     var lifetime = 600
-    return session.allocateP()
+    return socket.allocateP()
       .then(function (result) {
-        return session.refreshP(lifetime)
+        return socket.refreshP(lifetime)
       })
       .then(function (duration) {
         expect(duration).to.equal(lifetime)
-        return session.closeP()
+        return socket.closeP()
       })
   })
 
   it('should execute TURN allocate followed by create permission (using promises)', function () {
-    var session = new TurnSession(testAddr, testPort, testUser, testPwd)
+    var socket = new TurnSocket(testAddr, testPort, testUser, testPwd)
     var testAddress = '1.2.3.4'
     var lifetime = 600
-    return session.allocateP()
+    return socket.allocateP()
       .then(function (result) {
-        return session.createPermissionP(testAddress, lifetime)
+        return socket.createPermissionP(testAddress, lifetime)
       })
       .then(function () {
-        return session.closeP()
+        return socket.closeP()
       })
   })
 
@@ -117,28 +117,36 @@ describe('#TURN operations', function () {
     var testRuns = 10
     var messagesReceived = 0
 
-    var sessionAlice = new TurnSession(testAddr, testPort, testUser, testPwd)
-    var sessionBob = new TurnSession(testAddr, testPort, testUser, testPwd)
+    var socketAlice = new TurnSocket(testAddr, testPort, testUser, testPwd)
+    var socketBob = new TurnSocket(testAddr, testPort, testUser, testPwd)
     var srflxAddressAlice, srflxAddressBob, relayAddressAlice, relayAddressBob
 
     var sendTestMessageFromAliceToBob = function() {
-      sessionAlice.sendData(testData, relayAddressBob.address, relayAddressBob.port, function (error) {
-        if (error) {
+      var args = {
+        data: testData,
+        address: relayAddressBob.address,
+        port: relayAddressBob.port
+      }
+      socketAlice.sendData(
+        args,
+        function() {
+          winston.debug('[libturn] message sent to ' + relayAddressBob.address + ':' + relayAddressBob.port)
+        }, // on success
+        function (error) {
           done(error)
         }
-        winston.debug('[libturn] deliver message to ' + relayAddressBob.address + ':' + relayAddressBob.port)
-      })
+      )
     }
 
     // subscribe to incoming messages
-    sessionBob.on('data', function (data, peerAddress) {
+    socketBob.on('data', function (data, peerAddress) {
       expect(data).to.equal(testData)
       winston.debug('[libturn] receiving test message ' + data)
       messagesReceived++
       if (messagesReceived === testRuns) {
-        sessionBob.closeP()
+        socketBob.closeP()
           .then(function() {
-            return sessionAlice.closeP()
+            return socketAlice.closeP()
           })
           .then(function() {
             done()
@@ -148,15 +156,15 @@ describe('#TURN operations', function () {
       }
     })
 
-    // allocate session alice
-    sessionAlice.allocateP()
+    // allocate relaying session for alice
+    socketAlice.allocateP()
       .then(function (allocateAddress) {
         srflxAddressAlice = allocateAddress.mappedAddress
         relayAddressAlice = allocateAddress.relayedAddress
         winston.debug('[libturn] alice\'s srflx address = ' + srflxAddressAlice.address + ':' + srflxAddressAlice.port)
         winston.debug('[libturn] alice\'s relay address = ' + relayAddressAlice.address + ':' + relayAddressAlice.port)
-        // allocate session bob
-        return sessionBob.allocateP()
+        // allocate relaying session for bob
+        return socketBob.allocateP()
       })
       .then(function (allocateAddress) {
         srflxAddressBob = allocateAddress.mappedAddress
@@ -164,11 +172,11 @@ describe('#TURN operations', function () {
         winston.debug('[libturn] bob\'s address = ' + srflxAddressBob.address + ':' + srflxAddressBob.port)
         winston.debug('[libturn] bob\'s relay address = ' + relayAddressBob.address + ':' + relayAddressBob.port)
         // create permission for alice to send messages to bob
-        return sessionBob.createPermissionP(relayAddressAlice.address)
+        return socketBob.createPermissionP(relayAddressAlice.address)
       })
       .then(function () {
         // create permission for bob to send messages to alice
-        return sessionAlice.createPermissionP(relayAddressBob.address)
+        return socketAlice.createPermissionP(relayAddressBob.address)
       })
       .then(function () {
         // send test message
@@ -181,29 +189,33 @@ describe('#TURN operations', function () {
     var testRuns = 10
     var messagesReceived = 0
 
-    var sessionAlice = new TurnSession(testAddr, testPort, testUser, testPwd)
-    var sessionBob = new TurnSession(testAddr, testPort, testUser, testPwd)
+    var socketAlice = new TurnSocket(testAddr, testPort, testUser, testPwd)
+    var socketBob = new TurnSocket(testAddr, testPort, testUser, testPwd)
     var srflxAddressAlice, srflxAddressBob, relayAddressAlice, relayAddressBob
     var channelId
 
     var sendTestMessageFromAliceToBob = function () {
-      sessionAlice.sendChannelData(channelId, testData, function (error) {
-        if (error) {
+      socketAlice.sendChannelData(
+        channelId,
+        testData,
+        function() {
+          winston.debug('[libturn] message sent to channel ' + channelId)
+        },
+        function (error) {
           done(error)
         }
-        winston.debug('[libturn] deliver message to channel ' + channelId)
-      })
+      )
     }
 
     // subscribe to incoming messages
-    sessionBob.on('data', function (data, peerAddress) {
+    socketBob.on('data', function (data, peerAddress) {
       expect(data).to.equal(testData)
       winston.debug('[libturn] receiving test message ' + data)
       messagesReceived++
       if (messagesReceived === testRuns) {
-        sessionBob.closeP()
+        socketBob.closeP()
           .then(function () {
-            return sessionAlice.closeP()
+            return socketAlice.closeP()
           })
           .then(function () {
             done()
@@ -213,15 +225,15 @@ describe('#TURN operations', function () {
       }
     })
 
-    // allocate session alice
-    sessionAlice.allocateP()
+    // allocate relaying session for alice
+    socketAlice.allocateP()
       .then(function (allocateAddress) {
         srflxAddressAlice = allocateAddress.mappedAddress
         relayAddressAlice = allocateAddress.relayedAddress
         winston.debug("[libturn] alice's srflx address = " + srflxAddressAlice.address + ':' + srflxAddressAlice.port)
         winston.debug("[libturn] alice's relay address = " + relayAddressAlice.address + ':' + relayAddressAlice.port)
-        // allocate session bob
-        return sessionBob.allocateP()
+        // allocate relaying session for bob
+        return socketBob.allocateP()
       })
       .then(function (allocateAddress) {
         srflxAddressBob = allocateAddress.mappedAddress
@@ -229,21 +241,21 @@ describe('#TURN operations', function () {
         winston.debug("[libturn] bob's address = " + srflxAddressBob.address + ':' + srflxAddressBob.port)
         winston.debug("[libturn] bob's relay address = " + relayAddressBob.address + ':' + relayAddressBob.port)
         // create permission for alice to send messages to bob
-        return sessionBob.createPermissionP(relayAddressAlice.address)
+        return socketBob.createPermissionP(relayAddressAlice.address)
       })
       .then(function () {
         // create channel from alice to bob
-        return sessionAlice.bindChannelP(relayAddressBob.address, relayAddressBob.port)
+        return socketAlice.bindChannelP(relayAddressBob.address, relayAddressBob.port)
       })
       .then(function (channel) {
         expect(channel).not.to.be.undefined
         channelId = channel
         //  create permission for bob to send messages to alice
-        return sessionAlice.createPermissionP(relayAddressBob.address)
+        return socketAlice.createPermissionP(relayAddressBob.address)
       })
       .then(function () {
         // create channel from bob to alice
-        return sessionBob.bindChannelP(relayAddressAlice.address, relayAddressAlice.port)
+        return socketBob.bindChannelP(relayAddressAlice.address, relayAddressAlice.port)
       })
       .then(function (anotherChannel) {
         // send test message

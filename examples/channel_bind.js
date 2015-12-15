@@ -26,8 +26,8 @@ var argv = require('yargs')
   .alias('h', 'help')
   .argv
 
-var clientAlice = turn.init(argv.addr, argv.port, argv.user, argv.pwd)
-var clientBob = turn.init(argv.addr, argv.port, argv.user, argv.pwd)
+var socketAlice = turn(argv.addr, argv.port, argv.user, argv.pwd)
+var socketBob = turn(argv.addr, argv.port, argv.user, argv.pwd)
 var srflxAddressAlice, srflxAddressBob, relayAddressAlice, relayAddressBob
 var channelAlice, channelBob
 
@@ -36,38 +36,45 @@ var testAnswer = 'A movie.'
 var testRuns = 10
 var messagesSent = 0
 
-var sendRequest = function (onReady) {
-  clientAlice.sendChannelData(channelBob, testQuestion, function (error) {
-    if (error) {
+var sendRequest = function (onSuccess) {
+  socketAlice.sendChannelData(
+    channelBob,
+    testQuestion,
+    function () { // on success
+      winston.info('question sent from alice to bob')
+      if (onSuccess) {
+        onSuccess()
+      }
+    },
+    function (error) { // on error
       winston.error(error)
-      return
     }
-    winston.info('question sent from alice to bob')
-    if (onReady) {
-      onReady()
-    }
-  })
+  )
 }
 
 var sendReply = function () {
-  clientBob.sendChannelData(channelAlice, testAnswer, function (error) {
-    if (error) {
+  socketBob.sendChannelData(
+    channelAlice,
+    testAnswer,
+    function () { // on success
+      winston.info('response sent from bob to alice')
+    },
+    function (error) { // on failure
       winston.error(error)
-      return
     }
-    winston.info('response sent from bob to alice')
-  })
+  )
 }
 
-clientAlice.on('data', function (data, peerAddress) {
+socketAlice.on('data', function (data, peerAddress) {
   winston.info('alice received response: ' + data)
   if (messagesSent === testRuns) {
-    clientAlice.closeP()
+    socketAlice.closeP()
       .then(function () {
-        return clientBob.closeP()
+        return socketBob.closeP()
       })
       .then(function () {
         winston.info("that's all folks")
+        process.exit(0)
       })
   } else {
     sendRequest(function () {
@@ -76,20 +83,20 @@ clientAlice.on('data', function (data, peerAddress) {
   }
 })
 
-clientBob.on('data', function (data, peerAddress) {
+socketBob.on('data', function (data, peerAddress) {
   winston.info('bob received question: ' + data)
   sendReply()
 })
 
 // allocate session alice
-clientAlice.allocateP()
+socketAlice.allocateP()
   .then(function (allocateAddress) {
     srflxAddressAlice = allocateAddress.mappedAddress
     relayAddressAlice = allocateAddress.relayedAddress
     winston.debug("alice's srflx address = " + srflxAddressAlice.address + ':' + srflxAddressAlice.port)
     winston.debug("alice's relay address = " + relayAddressAlice.address + ':' + relayAddressAlice.port)
     // allocate session bob
-    return clientBob.allocateP()
+    return socketBob.allocateP()
   })
   .then(function (allocateAddress) {
     srflxAddressBob = allocateAddress.mappedAddress
@@ -97,20 +104,20 @@ clientAlice.allocateP()
     winston.debug("bob's address = " + srflxAddressBob.address + ':' + srflxAddressBob.port)
     winston.debug("bob's relay address = " + relayAddressBob.address + ':' + relayAddressBob.port)
     // create permission for alice to send messages to bob
-    return clientBob.createPermissionP(relayAddressAlice.address)
+    return socketBob.createPermissionP(relayAddressAlice.address)
   })
   .then(function () {
     //  create permission for bob to send messages to alice
-    return clientAlice.createPermissionP(relayAddressBob.address)
+    return socketAlice.createPermissionP(relayAddressBob.address)
   })
   .then(function () {
     // create channel from alice to bob
-    return clientAlice.bindChannelP(relayAddressBob.address, relayAddressBob.port)
+    return socketAlice.bindChannelP(relayAddressBob.address, relayAddressBob.port)
   })
   .then(function (channel) {
     channelBob = channel
     // create channel from bob to alice
-    return clientBob.bindChannelP(relayAddressAlice.address, relayAddressAlice.port)
+    return socketBob.bindChannelP(relayAddressAlice.address, relayAddressAlice.port)
   })
   .then(function (channel) {
     channelAlice = channel

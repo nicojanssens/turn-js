@@ -6,28 +6,30 @@ var winston = require('winston')
 var Attributes = require('./attributes')
 var ChannelData = require('./channel_data')
 var Packet = require('./packet')
-var Session = require('./session')
+var StunSocket = require('libstun').StunSocket
 
 // Constructor
-var TurnSession = function (stunHost, stunPort, username, password) {
-  Session.call(this, stunHost, stunPort)
+var TurnSocket = function (stunHost, stunPort, username, password) {
+  StunSocket.call(this, stunHost, stunPort)
   this.username = username
   this.password = password
 }
 
-// Inherit from session
-inherits(TurnSession, Session)
+// Inherit from StunSocket
+inherits(TurnSocket, StunSocket)
 
-TurnSession.DEFAULTS = {
-  software: 'libturn v0.1',
+var pjson = require('../package.json')
+var defaultSoftwareTag = pjson.name + ' v' + pjson.version
+TurnSocket.DEFAULTS = {
+  software: defaultSoftwareTag,
   lifetime: 3600,
   dontFragment: true
 }
 
-/** Session opertions */
+/** TurnSocket opertions */
 
 // Execute allocation
-TurnSession.prototype.allocateP = function () {
+TurnSocket.prototype.allocateP = function () {
   var self = this
   // send an allocate request without credentials
   return this.sendAllocateP()
@@ -92,23 +94,23 @@ TurnSession.prototype.allocateP = function () {
     })
 }
 
-TurnSession.prototype.allocate = function (onReady, onError) {
-  if (onReady === undefined || onError === undefined) {
+TurnSocket.prototype.allocate = function (onSuccess, onFailure) {
+  if (onSuccess === undefined || onFailure === undefined) {
     var error = '[libturn] allocate callback handlers are undefined'
     winston.error(error)
     throw new Error(error)
   }
   this.allocateP()
     .then(function (result) {
-      onReady(result)
+      onSuccess(result)
     })
     .catch(function (error) {
-      onError(error)
+      onFailure(error)
     })
 }
 
 // Create permission to send data to a peer address
-TurnSession.prototype.createPermissionP = function (address, lifetime) {
+TurnSocket.prototype.createPermissionP = function (address, lifetime) {
   if (address === undefined) {
     var error = '[libturn] create permission requires specified peer address'
     winston.error(error)
@@ -135,8 +137,8 @@ TurnSession.prototype.createPermissionP = function (address, lifetime) {
     })
 }
 
-TurnSession.prototype.createPermission = function (address, lifetime, onReady, onError) {
-  if (onReady === undefined || onError === undefined) {
+TurnSocket.prototype.createPermission = function (address, lifetime, onSuccess, onFailure) {
+  if (onSuccess === undefined || onFailure === undefined) {
     var undefinedCbError = '[libturn] create permission callback handlers are undefined'
     winston.error(undefinedCbError)
     throw new Error(undefinedCbError)
@@ -148,15 +150,15 @@ TurnSession.prototype.createPermission = function (address, lifetime, onReady, o
   }
   this.createPermissionP(address, lifetime)
     .then(function () {
-      onReady()
+      onSuccess()
     })
     .catch(function (error) {
-      onError(error)
+      onFailure(error)
     })
 }
 
 // Create channel
-TurnSession.prototype.bindChannelP = function (address, port, channel, lifetime) {
+TurnSocket.prototype.bindChannelP = function (address, port, channel, lifetime) {
   if (address === undefined || port === undefined) {
     var undefinedAddressError = '[libturn] channel bind requires specified peer address and port'
     winston.error(undefinedAddressError)
@@ -199,8 +201,8 @@ TurnSession.prototype.bindChannelP = function (address, port, channel, lifetime)
     })
 }
 
-TurnSession.prototype.bindChannel = function (address, port, channel, lifetime, onReady, onError) {
-  if (onReady === undefined || onError === undefined) {
+TurnSocket.prototype.bindChannel = function (address, port, channel, lifetime, onSuccess, onFailure) {
+  if (onSuccess === undefined || onFailure === undefined) {
     var undefinedCbError = '[libturn] bind callback handlers are undefined'
     winston.error(undefinedCbError)
     throw new Error(undefinedCbError)
@@ -212,15 +214,15 @@ TurnSession.prototype.bindChannel = function (address, port, channel, lifetime, 
   }
   this.bindChannelP(address, port, channel, lifetime)
     .then(function (duration) {
-      onReady(duration)
+      onSuccess(duration)
     })
     .catch(function (error) {
-      onError(error)
+      onFailure(error)
     })
 }
 
-// Execute session refresh
-TurnSession.prototype.refreshP = function (lifetime) {
+// Execute refresh
+TurnSocket.prototype.refreshP = function (lifetime) {
   var self = this
   // send refresh request
   var args = {}
@@ -270,120 +272,218 @@ TurnSession.prototype.refreshP = function (lifetime) {
     })
 }
 
-TurnSession.prototype.refresh = function (lifetime, onReady, onError) {
-  if (onReady === undefined || onError === undefined) {
+TurnSocket.prototype.refresh = function (lifetime, onSuccess, onFailure) {
+  if (onSuccess === undefined || onFailure === undefined) {
     var error = '[libturn] refresh callback handlers are undefined'
     winston.error(error)
     throw new Error(error)
   }
   this.refreshP(lifetime)
     .then(function (duration) {
-      onReady(duration)
+      onSuccess(duration)
     })
     .catch(function (error) {
-      onError(error)
+      onFailure(error)
     })
 }
 
-// Close this session
-TurnSession.prototype.close = function (onReady, onError) {
-  if (onReady === undefined || onError === undefined) {
+// Close this socket
+TurnSocket.prototype.closeP = function () {
+  var self = this
+  return this.refreshP(0)
+    .then(function () {
+      TurnSocket.super_.prototype.close.call(self)
+    })
+}
+
+TurnSocket.prototype.close = function (onSuccess, onFailure) {
+  if (onSuccess === undefined || onFailure === undefined) {
     var error = '[libturn] close callback handlers are undefined'
     winston.error(error)
     throw new Error(error)
   }
   this.closeP()
     .then(function () {
-      onReady()
+      onSuccess()
     })
     .catch(function (error) {
-      onError(error)
-    })
-}
-
-TurnSession.prototype.closeP = function () {
-  var self = this
-  return this.refreshP(0)
-    .then(function () {
-      self._close()
+      onFailure(error)
     })
 }
 
 /** Message transmission */
 
 // Send TURN allocation
-TurnSession.prototype.sendAllocate = function (args, cb) {
-  winston.debug('[libturn] send allocate')
-  var message = _composeAllocateMessage(args)
-  this._sendStunMessage(message, cb)
+TurnSocket.prototype.sendAllocateP = function (args) {
+  winston.debug('[libturn] send allocate (using promises)')
+  var message = composeAllocateRequest(args)
+  return this.sendStunRequestP(message)
 }
 
-TurnSession.prototype.sendAllocateP = function (args) {
-  winston.debug('[libturn] send allocate')
-  var message = _composeAllocateMessage(args)
-  return this._sendStunMessageP(message)
+TurnSocket.prototype.sendAllocate = function (args, onSuccess, onFailure) {
+  winston.debug('[libstun] send allocate')
+  if (onSuccess === undefined || onFailure === undefined) {
+    var error = '[libstun] send allocate callback handlers are undefined'
+    winston.error(error)
+    throw new Error(error)
+  }
+  this.sendAllocateP(args)
+    .then(function (reply) {
+      onSuccess(reply)
+    })
+    .catch(function (error) {
+      onFailure(error)
+    })
 }
 
 // Send TURN create permission
-TurnSession.prototype.sendCreatePermission = function (args, cb) {
-  winston.debug('[libturn] send create permission')
-  var message = _composeCreatePermissionMessage(args)
-  this._sendStunMessage(message, cb)
+TurnSocket.prototype.sendCreatePermissionP = function (args) {
+  winston.debug('[libturn] send create permission (using promises)')
+  var message = composeCreatePermissionRequest(args)
+  return this.sendStunRequestP(message)
 }
 
-TurnSession.prototype.sendCreatePermissionP = function (args) {
+TurnSocket.prototype.sendCreatePermission = function (args, onSuccess, onFailure) {
   winston.debug('[libturn] send create permission')
-  var message = _composeCreatePermissionMessage(args)
-  return this._sendStunMessageP(message)
+  if (onSuccess === undefined || onFailure === undefined) {
+    var error = '[libstun] send create permission callback handlers are undefined'
+    winston.error(error)
+    throw new Error(error)
+  }
+  this.sendCreatePermissionP(args)
+    .then(function (reply) {
+      onSuccess(reply)
+    })
+    .catch(function (error) {
+      onFailure(error)
+    })
 }
 
 // Send TURN channel bind
-TurnSession.prototype.sendChannelBind = function (args, cb) {
-  winston.debug('[libturn] send channel bind')
-  var message = _composeChannelBindMessage(args)
-  this._sendStunMessage(message, cb)
+TurnSocket.prototype.sendChannelBindP = function (args) {
+  winston.debug('[libturn] send channel bind (using promises)')
+  var message = composeChannelBindRequest(args)
+  return this.sendStunRequestP(message)
 }
 
-TurnSession.prototype.sendChannelBindP = function (args) {
+TurnSocket.prototype.sendChannelBind = function (args, onSuccess, onFailure) {
   winston.debug('[libturn] send channel bind')
-  var message = _composeChannelBindMessage(args)
-  return this._sendStunMessageP(message)
+  if (onSuccess === undefined || onFailure === undefined) {
+    var error = '[libstun] send channel bind callback handlers are undefined'
+    winston.error(error)
+    throw new Error(error)
+  }
+  this.sendChannelBindP(args)
+    .then(function (reply) {
+      onSuccess(reply)
+    })
+    .catch(function (error) {
+      onFailure(error)
+    })
 }
 
 // Send TURN refresh
-TurnSession.prototype.sendRefresh = function (args, cb) {
-  winston.debug('[libturn] send refresh')
-  var message = _composeRefreshMessage(args)
-  this._sendStunMessage(message, cb)
+TurnSocket.prototype.sendRefreshP = function (args) {
+  winston.debug('[libturn] send refresh (using promises)')
+  var message = composeRefreshRequest(args)
+  return this.sendStunRequestP(message)
 }
 
-TurnSession.prototype.sendRefreshP = function (args) {
+TurnSocket.prototype.sendRefresh = function (args, onSuccess, onFailure) {
   winston.debug('[libturn] send refresh')
-  var message = _composeRefreshMessage(args)
-  return this._sendStunMessageP(message)
+  if (onSuccess === undefined || onFailure === undefined) {
+    var error = '[libstun] send refresh callback handlers are undefined'
+    winston.error(error)
+    throw new Error(error)
+  }
+  this.sendRefreshP(args)
+    .then(function (reply) {
+      onSuccess(reply)
+    })
+    .catch(function (error) {
+      onFailure(error)
+    })
 }
 
 // Send data via relay/turn server
-TurnSession.prototype.sendData = function (data, address, port, cb) {
-  var args = {
-    data: data,
-    address: address,
-    port: port
-  }
-  var message = _composeSendMessage(args)
-  this._sendStunMessage(message, cb)
+TurnSocket.prototype.sendDataP = function (args) {
+  var message = composeSendIndication(args)
+  return this.sendStunIndicationP(message)
 }
 
-TurnSession.prototype.sendChannelData = function (channel, data, cb) {
-  var message = _composeChannelDataMessage(channel, data)
-  this._sendStunMessage(message, cb)
+TurnSocket.prototype.sendData = function (args, onSuccess, onFailure) {
+  winston.debug('[libturn] send data')
+  if (onSuccess === undefined || onFailure === undefined) {
+    var error = '[libstun] send data callback handlers are undefined'
+    winston.error(error)
+    throw new Error(error)
+  }
+  this.sendDataP(args)
+    .then(function () {
+      onSuccess()
+    })
+    .catch(function (error) {
+      onFailure(error)
+    })
+}
+
+// Send channel data via relay/turn server
+TurnSocket.prototype.sendChannelDataP = function (channel, data) {
+  var message = composeChannelDataMessage(channel, data)
+  return this.sendStunIndicationP(message)
+}
+
+TurnSocket.prototype.sendChannelData = function (channel, data, onSuccess, onFailure) {
+  winston.debug('[libturn] send channel data')
+  if (onSuccess === undefined || onFailure === undefined) {
+    var error = '[libstun] send channel data callback handlers are undefined'
+    winston.error(error)
+    throw new Error(error)
+  }
+  this.sendChannelDataP(channel, data)
+    .then(function () {
+      onSuccess()
+    })
+    .catch(function (error) {
+      onFailure(error)
+    })
+}
+
+/** Message arrival */
+
+// Incoming STUN indication
+TurnSocket.prototype.onIncomingStunIndication = function (stunPacket, rinfo) {
+  if (stunPacket.method === Packet.METHOD.DATA) {
+    var data = stunPacket.getAttribute(Attributes.DATA).data
+    var xorPeerAddress = stunPacket.getAttribute(Attributes.XOR_PEER_ADDRESS)
+    this.emit('data', data, {
+      address: xorPeerAddress.address,
+      port: xorPeerAddress.port
+    })
+  } else {
+    TurnSocket.super_.prototype.onIncomingStunIndication.call(this, stunPacket, rinfo)
+  }
+}
+
+// Incoming message that is different from regular STUN packets
+TurnSocket.prototype.onOtherIncomingMessage = function (msg, rinfo) {
+  var channelData = ChannelData.decode(msg)
+  // if this is a channel-data message
+  if (channelData) {
+    var data = channelData.data
+    this.emit('data', data, {
+      address: rinfo.address,
+      port: rinfo.port
+    })
+  } else {
+    TurnSocket.super_.prototype.onOtherIncomingMessage.call(this, msg, info)
+  }
 }
 
 /** Message composition */
 
-// TURN messages
-function _composeAllocateMessage (args) {
-  var margs = merge(Object.create(TurnSession.DEFAULTS), args)
+function composeAllocateRequest (args) {
+  var margs = merge(Object.create(TurnSocket.DEFAULTS), args)
   // create attrs
   var attrs = new Attributes()
   _addSecurityAttributes(attrs, margs)
@@ -394,13 +494,13 @@ function _composeAllocateMessage (args) {
     attrs.add(new Attributes.DontFragment())
   }
   // create allocate packet
-  var packet = new Packet(Packet.METHOD.ALLOCATE | Packet.CLASS.REQUEST, attrs)
+  var packet = new Packet(Packet.METHOD.ALLOCATE, Packet.TYPE.REQUEST, attrs)
   // encode packet
   var message = packet.encode()
   return message
 }
 
-function _composeCreatePermissionMessage (args) {
+function composeCreatePermissionRequest (args) {
   // check args
   if (args === undefined) {
     var undefinedArgsError = '[libturn] invalid create-permission attributes: args = undefined'
@@ -417,13 +517,13 @@ function _composeCreatePermissionMessage (args) {
   _addSecurityAttributes(attrs, args)
   attrs.add(new Attributes.XORPeerAddress(args.address))
   // create createPermission packet
-  var packet = new Packet(Packet.METHOD.CREATEPERMISSION | Packet.CLASS.REQUEST, attrs)
+  var packet = new Packet(Packet.METHOD.CREATEPERMISSION, Packet.TYPE.REQUEST, attrs)
   // encode packet
   var message = packet.encode()
   return message
 }
 
-function _composeSendMessage (args) {
+function composeSendIndication (args) {
   // check args
   if (args === undefined) {
     var undefinedArgsError = '[libturn] invalid send attributes: args = undefined'
@@ -445,7 +545,7 @@ function _composeSendMessage (args) {
     winston.error(undefinedDataError)
     throw new Error(undefinedDataError)
   }
-  var margs = merge(Object.create(TurnSession.DEFAULTS), args)
+  var margs = merge(Object.create(TurnSocket.DEFAULTS), args)
   // create attrs
   var attrs = new Attributes()
   attrs.add(new Attributes.XORPeerAddress(margs.address, margs.port))
@@ -454,13 +554,13 @@ function _composeSendMessage (args) {
   }
   attrs.add(new Attributes.Data(margs.data))
   // create send packet
-  var packet = new Packet(Packet.METHOD.SEND | Packet.CLASS.INDICATION, attrs)
+  var packet = new Packet(Packet.METHOD.SEND, Packet.TYPE.INDICATION, attrs)
   // encode packet
   var message = packet.encode()
   return message
 }
 
-function _composeChannelBindMessage (args) {
+function composeChannelBindRequest (args) {
   // check args
   if (args === undefined) {
     var undefinedArgsError = '[libturn] invalid channel-bind attributes: args = undefined'
@@ -491,13 +591,13 @@ function _composeChannelBindMessage (args) {
     attrs.add(new Attributes.Lifetime(args.lifetime))
   }
   // create channelBind packet
-  var packet = new Packet(Packet.METHOD.CHANNELBIND | Packet.CLASS.REQUEST, attrs)
+  var packet = new Packet(Packet.METHOD.CHANNELBIND, Packet.TYPE.REQUEST, attrs)
   // create channelBind packet
   var message = packet.encode()
   return message
 }
 
-function _composeChannelDataMessage (channel, data) {
+function composeChannelDataMessage (channel, data) {
   if (data === undefined) {
     var undefinedDataError = '[libturn] invalid channel-data attribute: data = undefined'
     winston.error(undefinedDataError)
@@ -515,15 +615,15 @@ function _composeChannelDataMessage (channel, data) {
   return message
 }
 
-function _composeRefreshMessage (args) {
-  var margs = merge(Object.create(TurnSession.DEFAULTS), args)
+function composeRefreshRequest (args) {
+  var margs = merge(Object.create(TurnSocket.DEFAULTS), args)
   // create attrs
   var attrs = new Attributes()
   _addSecurityAttributes(attrs, margs)
   attrs.add(new Attributes.Software(margs.software))
   attrs.add(new Attributes.Lifetime(margs.lifetime))
   // create refresh packet
-  var packet = new Packet(Packet.METHOD.REFRESH | Packet.CLASS.REQUEST, attrs)
+  var packet = new Packet(Packet.METHOD.REFRESH, Packet.TYPE.REQUEST, attrs)
   // encode packet
   var message = packet.encode()
   return message
@@ -548,4 +648,4 @@ function _addSecurityAttributes (attrs, args) {
   }
 }
 
-module.exports = TurnSession
+module.exports = TurnSocket

@@ -1,7 +1,14 @@
-var TurnSession = require('./src/turn_session')
+var Attributes = require('./src/attributes')
+var ChannelData = require('./src/channel_data')
+var Packet = require('./src/packet')
+var TurnSocket = require('./src/turn_socket')
 
-function init(address, port, user, pwd) {
-  return new TurnSession(address, port, user, pwd)
+module.exports = function createSocket (address, port, user, pwd) {
+  return new TurnSocket(address, port, user, pwd)
 }
 
-exports.init = init
+// TURN components
+module.exports.Attributes = Attributes
+module.exports.ChannelData = ChannelData
+module.exports.Packet = Packet
+module.exports.TurnSocket = TurnSocket

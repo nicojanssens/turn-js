@@ -1,4 +1,4 @@
-var padding = require('./padding')
+var padding = require('libstun').padding
 var winston = require('winston')
 
 var EvenPortAttr = function (reserveNextHigherPortNumber) {

@@ -8,26 +8,8 @@ var expect = chai.expect
 winston.level = 'debug'
 
 var username = 'foo'
-var software = 'libturn-test v0.1'
+var software = 'libturn-test'
 var lifetime = 3600
-
-describe('#STUN operations', function () {
-  it('should encode and decode a binding request', function (done) {
-    var packet = new Packet(Packet.METHOD.BINDING | Packet.CLASS.REQUEST)
-    var data = packet.encode()
-    var decodedPacket = Packet.decode(data)
-    expect(decodedPacket.method).to.equal(Packet.METHOD.BINDING | Packet.CLASS.REQUEST)
-    done()
-  })
-
-  it('should encode and decode a binding indication', function (done) {
-    var packet = new Packet(Packet.METHOD.BINDING | Packet.CLASS.INDICATION)
-    var data = packet.encode()
-    var decodedPacket = Packet.decode(data)
-    expect(decodedPacket.method).to.equal(Packet.METHOD.BINDING | Packet.CLASS.INDICATION)
-    done()
-  })
-})
 
 describe('#TURN operations', function () {
   it('should encode and decode an unauthenticated allocation packet', function (done) {
@@ -38,13 +20,14 @@ describe('#TURN operations', function () {
     attrs.add(new Attributes.Lifetime(lifetime))
     attrs.add(new Attributes.RequestedTransport())
     attrs.add(new Attributes.DontFragment())
-    var packet = new Packet(Packet.METHOD.ALLOCATE, attrs)
+    var packet = new Packet(Packet.METHOD.ALLOCATE, Packet.TYPE.REQUEST, attrs)
     // encode test packet
     var data = packet.encode()
     // decode test packet
     var decodedPacket = Packet.decode(data)
     // verify method
     expect(decodedPacket.method).to.equal(Packet.METHOD.ALLOCATE)
+    expect(decodedPacket.type).to.equal(Packet.TYPE.REQUEST)
     // verify attributes
     expect(decodedPacket.getAttribute(Attributes.USERNAME)).not.to.be.undefined
     expect(decodedPacket.getAttribute(Attributes.USERNAME).name).to.equal(username)
@@ -70,13 +53,14 @@ describe('#TURN operations', function () {
     var attrs = new Attributes()
     attrs.add(new Attributes.Username(username))
     attrs.add(new Attributes.XORPeerAddress(address))
-    var packet = new Packet(Packet.METHOD.CREATEPERMISSION, attrs)
+    var packet = new Packet(Packet.METHOD.CREATEPERMISSION, Packet.TYPE.INDICATION, attrs)
     // encode test packet
     var data = packet.encode()
     // decode test packet
     var decodedPacket = Packet.decode(data)
     // verify method
     expect(decodedPacket.method).to.equal(Packet.METHOD.CREATEPERMISSION)
+    expect(decodedPacket.type).to.equal(Packet.TYPE.INDICATION)
     // verify attributes
     expect(decodedPacket.getAttribute(Attributes.USERNAME)).not.to.be.undefined
     expect(decodedPacket.getAttribute(Attributes.USERNAME).name).to.equal(username)
