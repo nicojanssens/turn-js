@@ -6,7 +6,7 @@ var winston = require('winston')
 var Attributes = require('./attributes')
 var ChannelData = require('./channel_data')
 var Packet = require('./packet')
-var StunSocket = require('libstun').StunSocket
+var StunSocket = require('stun-js').StunSocket
 
 // Constructor
 var TurnSocket = function (stunHost, stunPort, username, password) {

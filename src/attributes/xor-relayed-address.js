@@ -1,4 +1,4 @@
-var addressAttr = require('libstun').address
+var addressAttr = require('stun-js').address
 var winston = require('winston')
 
 var XORRelayedAddressAttr = function (address, port) {

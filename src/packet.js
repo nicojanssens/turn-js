@@ -1,4 +1,4 @@
-var stun = require('libstun')
+var stun = require('stun-js')
 
 // STUN packet
 var Packet = stun.Packet

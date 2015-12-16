@@ -1,4 +1,4 @@
-var padding = require('libstun').padding
+var padding = require('stun-js').padding
 var winston = require('winston')
 
 var DataAttr = function (data) {
