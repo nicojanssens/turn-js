@@ -16,7 +16,7 @@
   "dependencies": {
     "merge": "*",
     "q": "*",
-    "stun-js": "0.1.0",
+    "stun-js": "0.1.1",
     "winston": "*"
   },
   "devDependencies": {
