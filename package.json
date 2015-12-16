@@ -1,5 +1,5 @@
 {
-  "name": "libturn",
+  "name": "turn-js",
   "version": "0.1.0",
   "description": "TURN (Traversal Using Relay NAT) library written entirely in JavaScript",
   "main": "index.js",
@@ -14,9 +14,9 @@
   },
   "license": "MIT",
   "dependencies": {
-    "libstun": "0.1.0",
     "merge": "*",
     "q": "*",
+    "stun-js": "0.1.0",
     "winston": "*"
   },
   "devDependencies": {
@@ -27,7 +27,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git://github.com/nicojanssens/libturn.git"
+    "url": "git://github.com/nicojanssens/turn-js.git"
   },
   "scripts": {
     "test": "./node_modules/.bin/mocha test/*.unit.js"
