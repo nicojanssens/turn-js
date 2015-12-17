@@ -26,6 +26,8 @@ var argv = require('yargs')
   .alias('h', 'help')
   .argv
 
+winston.level = argv.log
+
 var socketAlice = turn(argv.addr, argv.port, argv.user, argv.pwd)
 var socketBob = turn(argv.addr, argv.port, argv.user, argv.pwd)
 var srflxAddressAlice, srflxAddressBob, relayAddressAlice, relayAddressBob
