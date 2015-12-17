@@ -26,6 +26,8 @@ var argv = require('yargs')
   .alias('h', 'help')
   .argv
 
+winston.level = argv.log
+
 var socketAlice = turn(argv.addr, argv.port, argv.user, argv.pwd)
 var socketBob = turn(argv.addr, argv.port, argv.user, argv.pwd)
 var srflxAddressAlice, srflxAddressBob, relayAddressAlice, relayAddressBob
@@ -66,7 +68,7 @@ var sendReply = function () {
 }
 
 socketAlice.on('data', function (data, peerAddress) {
-  winston.info('alice received response: ' + data)
+  winston.info('alice received response ' + data + ' from ' + JSON.stringify(peerAddress))
   if (messagesSent === testRuns) {
     socketAlice.closeP()
       .then(function () {
@@ -84,7 +86,7 @@ socketAlice.on('data', function (data, peerAddress) {
 })
 
 socketBob.on('data', function (data, peerAddress) {
-  winston.info('bob received question: ' + data)
+  winston.info('bob received question ' + data + ' from ' + JSON.stringify(peerAddress))
   sendReply()
 })
 
@@ -116,11 +118,13 @@ socketAlice.allocateP()
   })
   .then(function (channel) {
     channelBob = channel
+    winston.debug("alice's channel to bob = " + channelBob)
     // create channel from bob to alice
     return socketBob.bindChannelP(relayAddressAlice.address, relayAddressAlice.port)
   })
   .then(function (channel) {
     channelAlice = channel
+    winston.debug("bob's channel to alice = " + channelAlice)
     // send test message
     sendRequest(function () {
       messagesSent++
