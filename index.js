@@ -3,8 +3,8 @@ var ChannelData = require('./src/channel_data')
 var Packet = require('./src/packet')
 var TurnSocket = require('./src/turn_socket')
 
-module.exports = function createSocket (address, port, user, pwd) {
-  return new TurnSocket(address, port, user, pwd)
+module.exports = function createSocket (address, port, user, pwd, udpSocket) {
+  return new TurnSocket(address, port, user, pwd, udpSocket)
 }
 
 // TURN components

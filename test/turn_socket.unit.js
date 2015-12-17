@@ -1,3 +1,5 @@
+var chromeDgram = require('chrome-dgram')
+var dgram = require('dgram')
 var TurnSocket = require('../src/turn_socket')
 var winston = require('winston')
 
@@ -84,6 +86,24 @@ describe('#TURN operations', function () {
     }
 
     socket.allocate(onReady, onError)
+  })
+
+  it('should execute TURN allocate operation using a specified dgram socket (using promises)', function () {
+    var udpSocket = dgram.createSocket('udp4')
+    var socket = new TurnSocket(testAddr, testPort, testUser, testPwd, udpSocket)
+    return socket.allocateP()
+      .then(function (result) {
+        expect(result).not.to.be.undefined
+        expect(result).to.have.property('mappedAddress')
+        expect(result.mappedAddress).to.have.property('address')
+        expect(result.mappedAddress).to.have.property('port')
+        //expect(result.mappedAddress.address).to.equal(testGW)
+        expect(result).to.have.property('relayedAddress')
+        expect(result.relayedAddress).to.have.property('address')
+        expect(result.relayedAddress).to.have.property('port')
+        expect(result.relayedAddress.address).to.equal(testAddr)
+        return socket.closeP()
+      })
   })
 
   it('should execute TURN allocate followed by refresh (using promises)', function () {

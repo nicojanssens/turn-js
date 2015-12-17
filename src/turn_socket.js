@@ -9,8 +9,8 @@ var Packet = require('./packet')
 var StunSocket = require('stun-js').StunSocket
 
 // Constructor
-var TurnSocket = function (stunHost, stunPort, username, password) {
-  StunSocket.call(this, stunHost, stunPort)
+var TurnSocket = function (stunHost, stunPort, username, password, udpSocket) {
+  StunSocket.call(this, stunHost, stunPort, udpSocket)
   this.username = username
   this.password = password
 }
