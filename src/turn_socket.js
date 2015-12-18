@@ -406,19 +406,24 @@ TurnSocket.prototype.sendRefresh = function (args, onSuccess, onFailure) {
 }
 
 // Send data via relay/turn server
-TurnSocket.prototype.sendDataP = function (args) {
+TurnSocket.prototype.sendToRelayP = function (bytes, address, port) {
+  var args = {
+    address: address,
+    port: port,
+    bytes: bytes
+  }
   var message = composeSendIndication(args)
   return this.sendStunIndicationP(message)
 }
 
-TurnSocket.prototype.sendData = function (args, onSuccess, onFailure) {
+TurnSocket.prototype.sendToRelay = function (bytes, address, port, onSuccess, onFailure) {
   winston.debug('[libturn] send data')
   if (onSuccess === undefined || onFailure === undefined) {
     var error = '[libstun] send data callback handlers are undefined'
     winston.error(error)
     throw new Error(error)
   }
-  this.sendDataP(args)
+  this.sendToRelayP(bytes, address, port)
     .then(function () {
       onSuccess()
     })
@@ -428,19 +433,23 @@ TurnSocket.prototype.sendData = function (args, onSuccess, onFailure) {
 }
 
 // Send channel data via relay/turn server
-TurnSocket.prototype.sendChannelDataP = function (channel, data) {
-  var message = composeChannelDataMessage(channel, data)
+TurnSocket.prototype.sendToChannelP = function (bytes, channel) {
+  var args = {
+    channel: channel,
+    bytes: bytes
+  }
+  var message = composeChannelDataMessage(args)
   return this.sendStunIndicationP(message)
 }
 
-TurnSocket.prototype.sendChannelData = function (channel, data, onSuccess, onFailure) {
+TurnSocket.prototype.sendToChannel = function (bytes, channel, onSuccess, onFailure) {
   winston.debug('[libturn] send channel data')
   if (onSuccess === undefined || onFailure === undefined) {
     var error = '[libstun] send channel data callback handlers are undefined'
     winston.error(error)
     throw new Error(error)
   }
-  this.sendChannelDataP(channel, data)
+  this.sendToChannelP(bytes, channel)
     .then(function () {
       onSuccess()
     })
@@ -454,9 +463,9 @@ TurnSocket.prototype.sendChannelData = function (channel, data, onSuccess, onFai
 // Incoming STUN indication
 TurnSocket.prototype.onIncomingStunIndication = function (stunPacket, rinfo) {
   if (stunPacket.method === Packet.METHOD.DATA) {
-    var data = stunPacket.getAttribute(Attributes.DATA).data
+    var dataBytes = stunPacket.getAttribute(Attributes.DATA).bytes
     var xorPeerAddress = stunPacket.getAttribute(Attributes.XOR_PEER_ADDRESS)
-    this.emit('data', data, {
+    this.emit('relayed-message', dataBytes, {
       address: xorPeerAddress.address,
       port: xorPeerAddress.port
     })
@@ -466,17 +475,14 @@ TurnSocket.prototype.onIncomingStunIndication = function (stunPacket, rinfo) {
 }
 
 // Incoming message that is different from regular STUN packets
-TurnSocket.prototype.onOtherIncomingMessage = function (msg, rinfo) {
-  var channelData = ChannelData.decode(msg)
+TurnSocket.prototype.onOtherIncomingMessage = function (bytes, rinfo) {
+  var channelData = ChannelData.decode(bytes)
   // if this is a channel-data message
   if (channelData) {
-    var data = channelData.data
-    this.emit('data', data, {
-      address: rinfo.address,
-      port: rinfo.port
-    })
+    var dataBytes = channelData.bytes
+    this.emit('relayed-message', dataBytes, rinfo, channelData.channel)
   } else {
-    TurnSocket.super_.prototype.onOtherIncomingMessage.call(this, msg, info)
+    TurnSocket.super_.prototype.onOtherIncomingMessage.call(this, bytes, rinfo)
   }
 }
 
@@ -540,10 +546,10 @@ function composeSendIndication (args) {
     winston.error(undefinedPortError)
     throw new Error(undefinedPortError)
   }
-  if (args.data === undefined) {
-    var undefinedDataError = '[libturn] invalid send attributes: args.data = undefined'
-    winston.error(undefinedDataError)
-    throw new Error(undefinedDataError)
+  if (args.bytes === undefined) {
+    var undefinedBytesError = '[libturn] invalid send attributes: args.bytes = undefined'
+    winston.error(undefinedBytesError)
+    throw new Error(undefinedBytesError)
   }
   var margs = merge(Object.create(TurnSocket.DEFAULTS), args)
   // create attrs
@@ -552,7 +558,7 @@ function composeSendIndication (args) {
   if (margs.dontFragment) {
     attrs.add(new Attributes.DontFragment())
   }
-  attrs.add(new Attributes.Data(margs.data))
+  attrs.add(new Attributes.Data(margs.bytes))
   // create send packet
   var packet = new Packet(Packet.METHOD.SEND, Packet.TYPE.INDICATION, attrs)
   // encode packet
@@ -597,19 +603,25 @@ function composeChannelBindRequest (args) {
   return message
 }
 
-function composeChannelDataMessage (channel, data) {
-  if (data === undefined) {
-    var undefinedDataError = '[libturn] invalid channel-data attribute: data = undefined'
+function composeChannelDataMessage (args) {
+  // check args
+  if (args === undefined) {
+    var undefinedArgsError = '[libturn] invalid channel-bind attributes: args = undefined'
+    winston.error(undefinedArgsError)
+    throw new Error(undefinedArgsError)
+  }
+  if (args.bytes === undefined) {
+    var undefinedDataError = '[libturn] invalid channel-data attribute: bytes = undefined'
     winston.error(undefinedDataError)
     throw new Error(undefinedDataError)
   }
-  if (channel === undefined) {
+  if (args.channel === undefined) {
     var undefinedChannelError = '[libturn] invalid channel-data attribute: channel = undefined'
     winston.error(undefinedChannelError)
     throw new Error(undefinedChannelError)
   }
   // create channel-data packet
-  var channelData = new ChannelData(channel, data)
+  var channelData = new ChannelData(args.channel, args.bytes)
   // encode packet
   var message = channelData.encode()
   return message

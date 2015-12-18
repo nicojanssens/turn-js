@@ -1,4 +1,3 @@
-var chromeDgram = require('chrome-dgram')
 var dgram = require('dgram')
 var TurnSocket = require('../src/turn_socket')
 var winston = require('winston')
@@ -10,29 +9,29 @@ chai.use(chaiAsPromised)
 chai.should()
 
 var argv = require('yargs')
-    .usage('Usage: $0 [params]')
-    .demand('a')
-    .alias('a', 'addr')
-    .nargs('a', 1)
-    .describe('a', 'TURN server address')
-    .demand('p')
-    .alias('p', 'port')
-    .nargs('p', 1)
-    .describe('p', 'TURN server port')
-    .alias('u', 'user')
-    .nargs('u', 1)
-    .describe('u', 'TURN server user account')
-    .alias('w', 'pwd')
-    .nargs('w', 1)
-    .describe('w', 'TURN server user password')
-    .default('l', 'debug')
-    .choices('l', ['info', 'debug', 'warn', 'error', 'verbose', 'silly' ])
-    .alias('l', 'log')
-    .nargs('l', 1)
-    .describe('l', 'Log level')
-    .help('h')
-    .alias('h', 'help')
-    .argv
+  .usage('Usage: $0 [params]')
+  .demand('a')
+  .alias('a', 'addr')
+  .nargs('a', 1)
+  .describe('a', 'TURN server address')
+  .demand('p')
+  .alias('p', 'port')
+  .nargs('p', 1)
+  .describe('p', 'TURN server port')
+  .alias('u', 'user')
+  .nargs('u', 1)
+  .describe('u', 'TURN server user account')
+  .alias('w', 'pwd')
+  .nargs('w', 1)
+  .describe('w', 'TURN server user password')
+  .default('l', 'debug')
+  .choices('l', ['info', 'debug', 'warn', 'error', 'verbose', 'silly'])
+  .alias('l', 'log')
+  .nargs('l', 1)
+  .describe('l', 'Log level')
+  .help('h')
+  .alias('h', 'help')
+  .argv
 
 var testAddr = argv.addr
 var testPort = argv.port
@@ -51,7 +50,7 @@ describe('#TURN operations', function () {
         expect(result).to.have.property('mappedAddress')
         expect(result.mappedAddress).to.have.property('address')
         expect(result.mappedAddress).to.have.property('port')
-        //expect(result.mappedAddress.address).to.equal(testGW)
+        // expect(result.mappedAddress.address).to.equal(testGW)
         expect(result).to.have.property('relayedAddress')
         expect(result.relayedAddress).to.have.property('address')
         expect(result.relayedAddress).to.have.property('port')
@@ -72,7 +71,7 @@ describe('#TURN operations', function () {
       expect(result).to.have.property('mappedAddress')
       expect(result.mappedAddress).to.have.property('address')
       expect(result.mappedAddress).to.have.property('port')
-      //expect(result.mappedAddress.address).to.equal(testGW)
+      // expect(result.mappedAddress.address).to.equal(testGW)
       expect(result).to.have.property('relayedAddress')
       expect(result.relayedAddress).to.have.property('address')
       expect(result.relayedAddress).to.have.property('port')
@@ -97,7 +96,7 @@ describe('#TURN operations', function () {
         expect(result).to.have.property('mappedAddress')
         expect(result.mappedAddress).to.have.property('address')
         expect(result.mappedAddress).to.have.property('port')
-        //expect(result.mappedAddress.address).to.equal(testGW)
+        // expect(result.mappedAddress.address).to.equal(testGW)
         expect(result).to.have.property('relayedAddress')
         expect(result.relayedAddress).to.have.property('address')
         expect(result.relayedAddress).to.have.property('port')
@@ -141,15 +140,13 @@ describe('#TURN operations', function () {
     var socketBob = new TurnSocket(testAddr, testPort, testUser, testPwd)
     var srflxAddressAlice, srflxAddressBob, relayAddressAlice, relayAddressBob
 
-    var sendTestMessageFromAliceToBob = function() {
-      var args = {
-        data: testData,
-        address: relayAddressBob.address,
-        port: relayAddressBob.port
-      }
-      socketAlice.sendData(
-        args,
-        function() {
+    var sendTestMessageFromAliceToBob = function () {
+      var bytes = new Buffer(testData)
+      socketAlice.sendToRelay(
+        bytes,
+        relayAddressBob.address,
+        relayAddressBob.port,
+        function () {
           winston.debug('[libturn] message sent to ' + relayAddressBob.address + ':' + relayAddressBob.port)
         }, // on success
         function (error) {
@@ -159,16 +156,17 @@ describe('#TURN operations', function () {
     }
 
     // subscribe to incoming messages
-    socketBob.on('data', function (data, peerAddress) {
-      expect(data).to.equal(testData)
-      winston.debug('[libturn] receiving test message ' + data)
+    socketBob.on('relayed-message', function (bytes, peerAddress) {
+      var message = bytes.toString()
+      expect(message).to.equal(testData)
+      winston.debug('[libturn] receiving test message ' + message)
       messagesReceived++
       if (messagesReceived === testRuns) {
         socketBob.closeP()
-          .then(function() {
+          .then(function () {
             return socketAlice.closeP()
           })
-          .then(function() {
+          .then(function () {
             done()
           })
       } else {
@@ -181,16 +179,16 @@ describe('#TURN operations', function () {
       .then(function (allocateAddress) {
         srflxAddressAlice = allocateAddress.mappedAddress
         relayAddressAlice = allocateAddress.relayedAddress
-        winston.debug('[libturn] alice\'s srflx address = ' + srflxAddressAlice.address + ':' + srflxAddressAlice.port)
-        winston.debug('[libturn] alice\'s relay address = ' + relayAddressAlice.address + ':' + relayAddressAlice.port)
+        winston.debug("[libturn] alice's srflx address = " + srflxAddressAlice.address + ':' + srflxAddressAlice.port)
+        winston.debug("[libturn] alice's relay address = " + relayAddressAlice.address + ':' + relayAddressAlice.port)
         // allocate relaying session for bob
         return socketBob.allocateP()
       })
       .then(function (allocateAddress) {
         srflxAddressBob = allocateAddress.mappedAddress
         relayAddressBob = allocateAddress.relayedAddress
-        winston.debug('[libturn] bob\'s address = ' + srflxAddressBob.address + ':' + srflxAddressBob.port)
-        winston.debug('[libturn] bob\'s relay address = ' + relayAddressBob.address + ':' + relayAddressBob.port)
+        winston.debug("[libturn] bob's address = " + srflxAddressBob.address + ':' + srflxAddressBob.port)
+        winston.debug("[libturn] bob's relay address = " + relayAddressBob.address + ':' + relayAddressBob.port)
         // create permission for alice to send messages to bob
         return socketBob.createPermissionP(relayAddressAlice.address)
       })
@@ -215,10 +213,11 @@ describe('#TURN operations', function () {
     var channelId
 
     var sendTestMessageFromAliceToBob = function () {
-      socketAlice.sendChannelData(
+      var bytes = new Buffer(testData)
+      socketAlice.sendToChannel(
+        bytes,
         channelId,
-        testData,
-        function() {
+        function () {
           winston.debug('[libturn] message sent to channel ' + channelId)
         },
         function (error) {
@@ -228,9 +227,10 @@ describe('#TURN operations', function () {
     }
 
     // subscribe to incoming messages
-    socketBob.on('data', function (data, peerAddress) {
-      expect(data).to.equal(testData)
-      winston.debug('[libturn] receiving test message ' + data)
+    socketBob.on('relayed-message', function (bytes, peerAddress) {
+      var message = bytes.toString()
+      expect(message).to.equal(testData)
+      winston.debug('[libturn] receiving test message ' + message)
       messagesReceived++
       if (messagesReceived === testRuns) {
         socketBob.closeP()

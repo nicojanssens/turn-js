@@ -1,11 +1,11 @@
 var winston = require('winston')
 
 // channel-data class
-var ChannelData = function (channel, data) {
-  if (data === undefined) {
-    var undefinedDataError = '[libturn] invalid channel-data attribute: data = undefined'
-    winston.error(undefinedDataError)
-    throw new Error(undefinedDataError)
+var ChannelData = function (channel, bytes) {
+  if (bytes === undefined) {
+    var undefinedBytesError = '[libturn] invalid channel-data attribute: bytes = undefined'
+    winston.error(undefinedBytesError)
+    throw new Error(undefinedBytesError)
   }
   if (channel === undefined) {
     var undefinedChannelError = '[libturn] invalid channel-data attribute: channel = undefined'
@@ -13,9 +13,9 @@ var ChannelData = function (channel, data) {
     throw new Error(undefinedChannelError)
   }
   this.channel = channel
-  this.data = data
+  this.bytes = bytes
 
-  winston.debug('[libturn] channel-data attrs: channel = ' + this.channel + ', data = ' + this.data)
+  winston.debug('[libturn] channel-data attrs: channel = ' + this.channel + ', data = ' + this.bytes)
 }
 
 ChannelData.prototype.encode = function () {
@@ -23,7 +23,7 @@ ChannelData.prototype.encode = function () {
   var channelBytes = new Buffer(2)
   channelBytes.writeUInt16BE(this.channel, 0)
   // create data bytes
-  var dataBytes = new Buffer(this.data)
+  var dataBytes = this.bytes
   // create length bytes
   var lengthBytes = new Buffer(2)
   lengthBytes.writeUInt16BE(dataBytes.length)
@@ -42,11 +42,10 @@ ChannelData.decode = function (buffer) {
   // decode data length
   var lengthBytes = buffer.slice(2, 4)
   var length = lengthBytes.readUInt16BE()
-  // decod data
+  // get data bytes
   var dataBytes = buffer.slice(4, 4 + length)
-  var data = dataBytes.toString()
 
-  var channelData = new ChannelData(channel, data)
+  var channelData = new ChannelData(channel, dataBytes)
   return channelData
 }
 

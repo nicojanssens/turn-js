@@ -39,9 +39,10 @@ var testRuns = 10
 var messagesSent = 0
 
 var sendRequest = function (onSuccess) {
-  socketAlice.sendChannelData(
+  var bytes = new Buffer(testQuestion)
+  socketAlice.sendToChannel(
+    bytes,
     channelBob,
-    testQuestion,
     function () { // on success
       winston.info('question sent from alice to bob')
       if (onSuccess) {
@@ -55,9 +56,10 @@ var sendRequest = function (onSuccess) {
 }
 
 var sendReply = function () {
-  socketBob.sendChannelData(
+  var bytes = new Buffer(testAnswer)
+  socketBob.sendToChannel(
+    bytes,
     channelAlice,
-    testAnswer,
     function () { // on success
       winston.info('response sent from bob to alice')
     },
@@ -67,8 +69,9 @@ var sendReply = function () {
   )
 }
 
-socketAlice.on('data', function (data, peerAddress) {
-  winston.info('alice received response ' + data + ' from ' + JSON.stringify(peerAddress))
+socketAlice.on('relayed-message', function (bytes, peerAddress) {
+  var message = bytes.toString()
+  winston.info('alice received response ' + message + ' from ' + JSON.stringify(peerAddress))
   if (messagesSent === testRuns) {
     socketAlice.closeP()
       .then(function () {
@@ -85,8 +88,9 @@ socketAlice.on('data', function (data, peerAddress) {
   }
 })
 
-socketBob.on('data', function (data, peerAddress) {
-  winston.info('bob received question ' + data + ' from ' + JSON.stringify(peerAddress))
+socketBob.on('relayed-message', function (bytes, peerAddress) {
+  var message = bytes.toString()
+  winston.info('bob received question ' + message + ' from ' + JSON.stringify(peerAddress))
   sendReply()
 })
 

@@ -49,13 +49,14 @@ describe('#TURN attributes', function () {
 
   it('should encode and decode a data attribute', function (done) {
     var testData = 'this is such an awesome library'
+    var testBytes = new Buffer(testData)
     var Data = Attributes.Data
-    var data = new Data(testData)
+    var data = new Data(testBytes)
     var bytes = data.encode()
     var length = bytes.readUInt16BE(2)
     var decodedData = Data.decode(bytes.slice(4, 4 + length))
-    expect(decodedData.data).to.exist
-    expect(decodedData.data).to.equal(testData)
+    expect(decodedData.bytes).to.exist
+    expect(decodedData.bytes.toString()).to.equal(testData)
     done()
   })
 

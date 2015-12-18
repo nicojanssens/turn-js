@@ -1,15 +1,15 @@
 var padding = require('stun-js').padding
 var winston = require('winston')
 
-var DataAttr = function (data) {
-  if (data === undefined) {
-    var error = '[libturn] invalid data attribute'
+var DataAttr = function (bytes) {
+  if (bytes === undefined) {
+    var error = '[libturn] invalid bytes attribute'
     winston.error(error)
     throw new Error(error)
   }
-  this.data = data
+  this.bytes = bytes
   this.type = 0x0013
-  winston.debug('[libturn] data attr: ' + this.data)
+  winston.debug('[libturn] data attr: ' + this.bytes)
 }
 
 DataAttr.prototype.encode = function () {
@@ -17,7 +17,7 @@ DataAttr.prototype.encode = function () {
   var typeBytes = new Buffer(2)
   typeBytes.writeUInt16BE(this.type, 0)
   // value
-  var valueBytes = new Buffer(this.data)
+  var valueBytes = this.bytes
   // length
   var lengthBytes = new Buffer(2)
   lengthBytes.writeUInt16BE(valueBytes.length, 0)
@@ -30,8 +30,7 @@ DataAttr.prototype.encode = function () {
 }
 
 DataAttr.decode = function (attrBytes) {
-  var data = attrBytes.toString()
-  return new DataAttr(data)
+  return new DataAttr(attrBytes)
 }
 
 module.exports = DataAttr
