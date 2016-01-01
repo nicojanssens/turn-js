@@ -3,7 +3,7 @@ var winston = require('winston')
 var RequestedTransportAttr = function () {
   this.value = 17 // UDP only
   this.type = 0x0019
-  winston.debug('[libturn] requested transport attr: ' + this.value)
+  winston.debug('[turn-js] requested transport attr: ' + this.value)
 }
 
 RequestedTransportAttr.prototype.encode = function () {

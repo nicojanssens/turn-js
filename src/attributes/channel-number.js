@@ -2,19 +2,19 @@ var winston = require('winston')
 
 var ChannelNumberAttr = function (channel) {
   if (typeof channel === 'undefined') {
-    var channelUndefinedError = '[libturn] channel-number attribute undefined'
+    var channelUndefinedError = '[turn-js] channel-number attribute undefined'
     winston.error(channelUndefinedError)
     throw new Error(channelUndefinedError)
   }
   if (Number(channel) === 'NaN') {
-    var channelNaNError = '[libturn] invalid channel-number attribute'
+    var channelNaNError = '[turn-js] invalid channel-number attribute'
     winston.error(channelNaNError)
     throw new Error(channelNaNError)
   }
   this.channel = channel
   this.type = 0x000C
 
-  winston.debug('[libturn] channel-number = ' + this.channel)
+  winston.debug('[turn-js] channel-number = ' + this.channel)
 }
 
 ChannelNumberAttr.prototype.encode = function () {
@@ -36,7 +36,7 @@ ChannelNumberAttr.prototype.encode = function () {
 
 ChannelNumberAttr.decode = function (attrBytes) {
   if (attrBytes.length !== 4) {
-    throw new Error('[libturn] invalid channel-number attribute')
+    throw new Error('[turn-js] invalid channel-number attribute')
   }
   var channel = attrBytes.readUInt16BE(0) // only two bytes are used
   return new ChannelNumberAttr(channel)

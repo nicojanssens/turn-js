@@ -3,13 +3,13 @@ var winston = require('winston')
 
 var EvenPortAttr = function (reserveNextHigherPortNumber) {
   if (typeof reserveNextHigherPortNumber !== 'boolean') {
-    var error = '[libturn] invalid even port attribute'
+    var error = '[turn-js] invalid even port attribute'
     winston.error(error)
     throw new Error(error)
   }
   this.reserveNextHigherPortNumber = reserveNextHigherPortNumber
   this.type = 0x0018
-  winston.debug('[libturn] even port attr w reserve-next-higher-port-number bit set to ' + this.reserveNextHigherPortNumber)
+  winston.debug('[turn-js] even port attr w reserve-next-higher-port-number bit set to ' + this.reserveNextHigherPortNumber)
 }
 
 EvenPortAttr.prototype.encode = function () {

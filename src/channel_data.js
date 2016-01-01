@@ -3,19 +3,19 @@ var winston = require('winston')
 // channel-data class
 var ChannelData = function (channel, bytes) {
   if (bytes === undefined) {
-    var undefinedBytesError = '[libturn] invalid channel-data attribute: bytes = undefined'
+    var undefinedBytesError = '[turn-js] invalid channel-data attribute: bytes = undefined'
     winston.error(undefinedBytesError)
     throw new Error(undefinedBytesError)
   }
   if (channel === undefined) {
-    var undefinedChannelError = '[libturn] invalid channel-data attribute: channel = undefined'
+    var undefinedChannelError = '[turn-js] invalid channel-data attribute: channel = undefined'
     winston.error(undefinedChannelError)
     throw new Error(undefinedChannelError)
   }
   this.channel = channel
   this.bytes = bytes
 
-  winston.debug('[libturn] channel-data attrs: channel = ' + this.channel + ', data = ' + this.bytes)
+  winston.debug('[turn-js] channel-data attrs: channel = ' + this.channel + ', data = ' + this.bytes)
 }
 
 ChannelData.prototype.encode = function () {

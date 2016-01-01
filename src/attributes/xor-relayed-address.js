@@ -3,7 +3,7 @@ var winston = require('winston')
 
 var XORRelayedAddressAttr = function (address, port) {
   if (address === undefined || port === undefined) {
-    var error = '[libturn] invalid xor relayed address attribute'
+    var error = '[turn-js] invalid xor relayed address attribute'
     winston.error(error)
     throw new Error(error)
   }
@@ -11,12 +11,12 @@ var XORRelayedAddressAttr = function (address, port) {
   this.port = port
   this.type = 0x0016
 
-  winston.debug('[libturn] xor relayed address attr: ' + this.address + ':' + this.port)
+  winston.debug('[turn-js] xor relayed address attr: ' + this.address + ':' + this.port)
 }
 
 XORRelayedAddressAttr.prototype.encode = function (magic, tid) {
   if (magic === undefined || tid === undefined) {
-    var error = '[libturn] invalid xorRelayedAddressAttr.encode params'
+    var error = '[turn-js] invalid xorRelayedAddressAttr.encode params'
     winston.error(error)
     throw new Error(error)
   }

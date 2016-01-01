@@ -41,7 +41,7 @@ TurnSocket.prototype.allocateP = function () {
         if (errorCode.code === 401) {
           // throw error if username and password are undefined
           if (self.username === undefined || self.password === undefined) {
-            throw new Error('[libturn] allocate error: unauthorized access, while username and/or password are undefined')
+            throw new Error('[turn-js] allocate error: unauthorized access, while username and/or password are undefined')
           }
           // create a new allocate request
           var args = {}
@@ -52,7 +52,7 @@ TurnSocket.prototype.allocateP = function () {
           return self.sendAllocateP(args)
         } else {
           // throw an error if error code !== 401
-          throw new Error('[libturn] allocate error: ' + errorCode.reason)
+          throw new Error('[turn-js] allocate error: ' + errorCode.reason)
         }
       } else {
         // process allocate reply in next call
@@ -66,7 +66,7 @@ TurnSocket.prototype.allocateP = function () {
       var errorCode = allocateReply.getAttribute(Attributes.ERROR_CODE)
       // check if the reply includes an error code attr
       if (errorCode) {
-        throw new Error('[libturn] allocate error: ' + errorCode.reason)
+        throw new Error('[turn-js] allocate error: ' + errorCode.reason)
       }
       // store mapped address
       var mappedAddressAttr = allocateReply.getAttribute(Attributes.XOR_MAPPED_ADDRESS)
@@ -96,7 +96,7 @@ TurnSocket.prototype.allocateP = function () {
 
 TurnSocket.prototype.allocate = function (onSuccess, onFailure) {
   if (onSuccess === undefined || onFailure === undefined) {
-    var error = '[libturn] allocate callback handlers are undefined'
+    var error = '[turn-js] allocate callback handlers are undefined'
     winston.error(error)
     throw new Error(error)
   }
@@ -112,7 +112,7 @@ TurnSocket.prototype.allocate = function (onSuccess, onFailure) {
 // Create permission to send data to a peer address
 TurnSocket.prototype.createPermissionP = function (address, lifetime) {
   if (address === undefined) {
-    var error = '[libturn] create permission requires specified peer address'
+    var error = '[turn-js] create permission requires specified peer address'
     winston.error(error)
     throw new Error(error)
   }
@@ -131,7 +131,7 @@ TurnSocket.prototype.createPermissionP = function (address, lifetime) {
       var errorCode = createPermissionReply.getAttribute(Attributes.ERROR_CODE)
       // check if the reply includes an error code attr
       if (errorCode) {
-        throw new Error('[libturn] create permission error ' + errorCode.reason)
+        throw new Error('[turn-js] create permission error ' + errorCode.reason)
       }
     // done
     })
@@ -139,12 +139,12 @@ TurnSocket.prototype.createPermissionP = function (address, lifetime) {
 
 TurnSocket.prototype.createPermission = function (address, lifetime, onSuccess, onFailure) {
   if (onSuccess === undefined || onFailure === undefined) {
-    var undefinedCbError = '[libturn] create permission callback handlers are undefined'
+    var undefinedCbError = '[turn-js] create permission callback handlers are undefined'
     winston.error(undefinedCbError)
     throw new Error(undefinedCbError)
   }
   if (address === undefined) {
-    var undefinedAddressError = '[libturn] create permission requires specified peer address'
+    var undefinedAddressError = '[turn-js] create permission requires specified peer address'
     winston.error(undefinedAddressError)
     throw new Error(undefinedAddressError)
   }
@@ -160,7 +160,7 @@ TurnSocket.prototype.createPermission = function (address, lifetime, onSuccess, 
 // Create channel
 TurnSocket.prototype.bindChannelP = function (address, port, channel, lifetime) {
   if (address === undefined || port === undefined) {
-    var undefinedAddressError = '[libturn] channel bind requires specified peer address and port'
+    var undefinedAddressError = '[turn-js] channel bind requires specified peer address and port'
     winston.error(undefinedAddressError)
     throw new Error(undefinedAddressError)
   }
@@ -169,7 +169,7 @@ TurnSocket.prototype.bindChannelP = function (address, port, channel, lifetime) 
   var max = 0x7FFF
   if (channel !== undefined) {
     if (channel < min || channel > max) {
-      var incorrectChannelError = '[libturn] channel id must be >= 0x4000 and =< 0x7FFF'
+      var incorrectChannelError = '[turn-js] channel id must be >= 0x4000 and =< 0x7FFF'
       winston.error(incorrectChannelError)
       throw new Error(incorrectChannelError)
     }
@@ -193,7 +193,7 @@ TurnSocket.prototype.bindChannelP = function (address, port, channel, lifetime) 
       var errorCode = channelBindReply.getAttribute(Attributes.ERROR_CODE)
       // check if the reply includes an error code attr
       if (errorCode) {
-        throw new Error('[libturn] bind error: ' + errorCode.reason)
+        throw new Error('[turn-js] bind error: ' + errorCode.reason)
       }
       return Q.fcall(function () {
         return channel
@@ -203,12 +203,12 @@ TurnSocket.prototype.bindChannelP = function (address, port, channel, lifetime) 
 
 TurnSocket.prototype.bindChannel = function (address, port, channel, lifetime, onSuccess, onFailure) {
   if (onSuccess === undefined || onFailure === undefined) {
-    var undefinedCbError = '[libturn] bind callback handlers are undefined'
+    var undefinedCbError = '[turn-js] bind callback handlers are undefined'
     winston.error(undefinedCbError)
     throw new Error(undefinedCbError)
   }
   if (address === undefined || port === undefined) {
-    var undefinedAddressError = '[libturn] channel bind requires specified peer address and port'
+    var undefinedAddressError = '[turn-js] channel bind requires specified peer address and port'
     winston.error(undefinedAddressError)
     throw new Error(undefinedAddressError)
   }
@@ -249,7 +249,7 @@ TurnSocket.prototype.refreshP = function (lifetime) {
           return self.sendRefreshP(args)
         } else {
           // throw an error if error code !== 438
-          throw new Error('[libturn] refresh error: ' + refreshReply.getAttribute(Attributes.ERROR_CODE).reason)
+          throw new Error('[turn-js] refresh error: ' + refreshReply.getAttribute(Attributes.ERROR_CODE).reason)
         }
       } else {
         // process refresh reply in next call
@@ -262,7 +262,7 @@ TurnSocket.prototype.refreshP = function (lifetime) {
       var errorCode = refreshReply.getAttribute(Attributes.ERROR_CODE)
       // check if the reply includes an error code attr
       if (errorCode) {
-        throw new Error('[libturn] refresh error: ' + errorCode.reason)
+        throw new Error('[turn-js] refresh error: ' + errorCode.reason)
       }
       // otherwise retrieve and return lifetime
       var lifetime = refreshReply.getAttribute(Attributes.LIFETIME).duration
@@ -274,7 +274,7 @@ TurnSocket.prototype.refreshP = function (lifetime) {
 
 TurnSocket.prototype.refresh = function (lifetime, onSuccess, onFailure) {
   if (onSuccess === undefined || onFailure === undefined) {
-    var error = '[libturn] refresh callback handlers are undefined'
+    var error = '[turn-js] refresh callback handlers are undefined'
     winston.error(error)
     throw new Error(error)
   }
@@ -298,7 +298,7 @@ TurnSocket.prototype.closeP = function () {
 
 TurnSocket.prototype.close = function (onSuccess, onFailure) {
   if (onSuccess === undefined || onFailure === undefined) {
-    var error = '[libturn] close callback handlers are undefined'
+    var error = '[turn-js] close callback handlers are undefined'
     winston.error(error)
     throw new Error(error)
   }
@@ -315,7 +315,7 @@ TurnSocket.prototype.close = function (onSuccess, onFailure) {
 
 // Send TURN allocation
 TurnSocket.prototype.sendAllocateP = function (args) {
-  winston.debug('[libturn] send allocate (using promises)')
+  winston.debug('[turn-js] send allocate (using promises)')
   var message = composeAllocateRequest(args)
   return this.sendStunRequestP(message)
 }
@@ -338,13 +338,13 @@ TurnSocket.prototype.sendAllocate = function (args, onSuccess, onFailure) {
 
 // Send TURN create permission
 TurnSocket.prototype.sendCreatePermissionP = function (args) {
-  winston.debug('[libturn] send create permission (using promises)')
+  winston.debug('[turn-js] send create permission (using promises)')
   var message = composeCreatePermissionRequest(args)
   return this.sendStunRequestP(message)
 }
 
 TurnSocket.prototype.sendCreatePermission = function (args, onSuccess, onFailure) {
-  winston.debug('[libturn] send create permission')
+  winston.debug('[turn-js] send create permission')
   if (onSuccess === undefined || onFailure === undefined) {
     var error = '[libstun] send create permission callback handlers are undefined'
     winston.error(error)
@@ -361,13 +361,13 @@ TurnSocket.prototype.sendCreatePermission = function (args, onSuccess, onFailure
 
 // Send TURN channel bind
 TurnSocket.prototype.sendChannelBindP = function (args) {
-  winston.debug('[libturn] send channel bind (using promises)')
+  winston.debug('[turn-js] send channel bind (using promises)')
   var message = composeChannelBindRequest(args)
   return this.sendStunRequestP(message)
 }
 
 TurnSocket.prototype.sendChannelBind = function (args, onSuccess, onFailure) {
-  winston.debug('[libturn] send channel bind')
+  winston.debug('[turn-js] send channel bind')
   if (onSuccess === undefined || onFailure === undefined) {
     var error = '[libstun] send channel bind callback handlers are undefined'
     winston.error(error)
@@ -384,13 +384,13 @@ TurnSocket.prototype.sendChannelBind = function (args, onSuccess, onFailure) {
 
 // Send TURN refresh
 TurnSocket.prototype.sendRefreshP = function (args) {
-  winston.debug('[libturn] send refresh (using promises)')
+  winston.debug('[turn-js] send refresh (using promises)')
   var message = composeRefreshRequest(args)
   return this.sendStunRequestP(message)
 }
 
 TurnSocket.prototype.sendRefresh = function (args, onSuccess, onFailure) {
-  winston.debug('[libturn] send refresh')
+  winston.debug('[turn-js] send refresh')
   if (onSuccess === undefined || onFailure === undefined) {
     var error = '[libstun] send refresh callback handlers are undefined'
     winston.error(error)
@@ -417,7 +417,7 @@ TurnSocket.prototype.sendToRelayP = function (bytes, address, port) {
 }
 
 TurnSocket.prototype.sendToRelay = function (bytes, address, port, onSuccess, onFailure) {
-  winston.debug('[libturn] send data')
+  winston.debug('[turn-js] send data')
   if (onSuccess === undefined || onFailure === undefined) {
     var error = '[libstun] send data callback handlers are undefined'
     winston.error(error)
@@ -443,7 +443,7 @@ TurnSocket.prototype.sendToChannelP = function (bytes, channel) {
 }
 
 TurnSocket.prototype.sendToChannel = function (bytes, channel, onSuccess, onFailure) {
-  winston.debug('[libturn] send channel data')
+  winston.debug('[turn-js] send channel data')
   if (onSuccess === undefined || onFailure === undefined) {
     var error = '[libstun] send channel data callback handlers are undefined'
     winston.error(error)
@@ -509,12 +509,12 @@ function composeAllocateRequest (args) {
 function composeCreatePermissionRequest (args) {
   // check args
   if (args === undefined) {
-    var undefinedArgsError = '[libturn] invalid create-permission attributes: args = undefined'
+    var undefinedArgsError = '[turn-js] invalid create-permission attributes: args = undefined'
     winston.error(undefinedArgsError)
     throw new Error(undefinedArgsError)
   }
   if (args.address === undefined) {
-    var undefinedAddressError = '[libturn] invalid create-permission attributes: args.address = undefined'
+    var undefinedAddressError = '[turn-js] invalid create-permission attributes: args.address = undefined'
     winston.error(undefinedAddressError)
     throw new Error(undefinedAddressError)
   }
@@ -532,22 +532,22 @@ function composeCreatePermissionRequest (args) {
 function composeSendIndication (args) {
   // check args
   if (args === undefined) {
-    var undefinedArgsError = '[libturn] invalid send attributes: args = undefined'
+    var undefinedArgsError = '[turn-js] invalid send attributes: args = undefined'
     winston.error(undefinedArgsError)
     throw new Error(undefinedArgsError)
   }
   if (args.address === undefined) {
-    var undefinedAddressError = '[libturn] invalid send attributes: args.address = undefined'
+    var undefinedAddressError = '[turn-js] invalid send attributes: args.address = undefined'
     winston.error(undefinedAddressError)
     throw new Error(undefinedAddressError)
   }
   if (args.port === undefined) {
-    var undefinedPortError = '[libturn] invalid send attributes: args.port = undefined'
+    var undefinedPortError = '[turn-js] invalid send attributes: args.port = undefined'
     winston.error(undefinedPortError)
     throw new Error(undefinedPortError)
   }
   if (args.bytes === undefined) {
-    var undefinedBytesError = '[libturn] invalid send attributes: args.bytes = undefined'
+    var undefinedBytesError = '[turn-js] invalid send attributes: args.bytes = undefined'
     winston.error(undefinedBytesError)
     throw new Error(undefinedBytesError)
   }
@@ -569,22 +569,22 @@ function composeSendIndication (args) {
 function composeChannelBindRequest (args) {
   // check args
   if (args === undefined) {
-    var undefinedArgsError = '[libturn] invalid channel-bind attributes: args = undefined'
+    var undefinedArgsError = '[turn-js] invalid channel-bind attributes: args = undefined'
     winston.error(undefinedArgsError)
     throw new Error(undefinedArgsError)
   }
   if (args.channel === undefined) {
-    var undefinedChannelError = '[libturn] invalid channel-bind attributes: args.channel = undefined'
+    var undefinedChannelError = '[turn-js] invalid channel-bind attributes: args.channel = undefined'
     winston.error(undefinedChannelError)
     throw new Error(undefinedChannelError)
   }
   if (args.address === undefined) {
-    var undefinedAddressError = '[libturn] invalid channel-bind attributes: args.address = undefined'
+    var undefinedAddressError = '[turn-js] invalid channel-bind attributes: args.address = undefined'
     winston.error(undefinedAddressError)
     throw new Error(undefinedAddressError)
   }
   if (args.port === undefined) {
-    var undefinedPortError = '[libturn] invalid channel-bind attributes: args.port = undefined'
+    var undefinedPortError = '[turn-js] invalid channel-bind attributes: args.port = undefined'
     winston.error(undefinedPortError)
     throw new Error(undefinedPortError)
   }
@@ -606,17 +606,17 @@ function composeChannelBindRequest (args) {
 function composeChannelDataMessage (args) {
   // check args
   if (args === undefined) {
-    var undefinedArgsError = '[libturn] invalid channel-bind attributes: args = undefined'
+    var undefinedArgsError = '[turn-js] invalid channel-bind attributes: args = undefined'
     winston.error(undefinedArgsError)
     throw new Error(undefinedArgsError)
   }
   if (args.bytes === undefined) {
-    var undefinedDataError = '[libturn] invalid channel-data attribute: bytes = undefined'
+    var undefinedDataError = '[turn-js] invalid channel-data attribute: bytes = undefined'
     winston.error(undefinedDataError)
     throw new Error(undefinedDataError)
   }
   if (args.channel === undefined) {
-    var undefinedChannelError = '[libturn] invalid channel-data attribute: channel = undefined'
+    var undefinedChannelError = '[turn-js] invalid channel-data attribute: channel = undefined'
     winston.error(undefinedChannelError)
     throw new Error(undefinedChannelError)
   }

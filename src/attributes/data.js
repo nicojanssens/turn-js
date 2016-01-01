@@ -3,13 +3,13 @@ var winston = require('winston')
 
 var DataAttr = function (bytes) {
   if (bytes === undefined) {
-    var error = '[libturn] invalid bytes attribute'
+    var error = '[turn-js] invalid bytes attribute'
     winston.error(error)
     throw new Error(error)
   }
   this.bytes = bytes
   this.type = 0x0013
-  winston.debug('[libturn] data attr: ' + this.bytes)
+  winston.debug('[turn-js] data attr: ' + this.bytes)
 }
 
 DataAttr.prototype.encode = function () {

@@ -8,7 +8,7 @@ var expect = chai.expect
 winston.level = 'debug'
 
 var username = 'foo'
-var software = 'libturn-test'
+var software = 'turn-js-test'
 var lifetime = 3600
 
 describe('#TURN operations', function () {

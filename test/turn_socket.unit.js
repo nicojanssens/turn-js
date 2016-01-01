@@ -147,7 +147,7 @@ describe('#TURN operations', function () {
         relayAddressBob.address,
         relayAddressBob.port,
         function () {
-          winston.debug('[libturn] message sent to ' + relayAddressBob.address + ':' + relayAddressBob.port)
+          winston.debug('[turn-js] message sent to ' + relayAddressBob.address + ':' + relayAddressBob.port)
         }, // on success
         function (error) {
           done(error)
@@ -159,7 +159,7 @@ describe('#TURN operations', function () {
     socketBob.on('relayed-message', function (bytes, peerAddress) {
       var message = bytes.toString()
       expect(message).to.equal(testData)
-      winston.debug('[libturn] receiving test message ' + message)
+      winston.debug('[turn-js] receiving test message ' + message)
       messagesReceived++
       if (messagesReceived === testRuns) {
         socketBob.closeP()
@@ -179,16 +179,16 @@ describe('#TURN operations', function () {
       .then(function (allocateAddress) {
         srflxAddressAlice = allocateAddress.mappedAddress
         relayAddressAlice = allocateAddress.relayedAddress
-        winston.debug("[libturn] alice's srflx address = " + srflxAddressAlice.address + ':' + srflxAddressAlice.port)
-        winston.debug("[libturn] alice's relay address = " + relayAddressAlice.address + ':' + relayAddressAlice.port)
+        winston.debug("[turn-js] alice's srflx address = " + srflxAddressAlice.address + ':' + srflxAddressAlice.port)
+        winston.debug("[turn-js] alice's relay address = " + relayAddressAlice.address + ':' + relayAddressAlice.port)
         // allocate relaying session for bob
         return socketBob.allocateP()
       })
       .then(function (allocateAddress) {
         srflxAddressBob = allocateAddress.mappedAddress
         relayAddressBob = allocateAddress.relayedAddress
-        winston.debug("[libturn] bob's address = " + srflxAddressBob.address + ':' + srflxAddressBob.port)
-        winston.debug("[libturn] bob's relay address = " + relayAddressBob.address + ':' + relayAddressBob.port)
+        winston.debug("[turn-js] bob's address = " + srflxAddressBob.address + ':' + srflxAddressBob.port)
+        winston.debug("[turn-js] bob's relay address = " + relayAddressBob.address + ':' + relayAddressBob.port)
         // create permission for alice to send messages to bob
         return socketBob.createPermissionP(relayAddressAlice.address)
       })
@@ -218,7 +218,7 @@ describe('#TURN operations', function () {
         bytes,
         channelId,
         function () {
-          winston.debug('[libturn] message sent to channel ' + channelId)
+          winston.debug('[turn-js] message sent to channel ' + channelId)
         },
         function (error) {
           done(error)
@@ -230,7 +230,7 @@ describe('#TURN operations', function () {
     socketBob.on('relayed-message', function (bytes, peerAddress) {
       var message = bytes.toString()
       expect(message).to.equal(testData)
-      winston.debug('[libturn] receiving test message ' + message)
+      winston.debug('[turn-js] receiving test message ' + message)
       messagesReceived++
       if (messagesReceived === testRuns) {
         socketBob.closeP()
@@ -250,16 +250,16 @@ describe('#TURN operations', function () {
       .then(function (allocateAddress) {
         srflxAddressAlice = allocateAddress.mappedAddress
         relayAddressAlice = allocateAddress.relayedAddress
-        winston.debug("[libturn] alice's srflx address = " + srflxAddressAlice.address + ':' + srflxAddressAlice.port)
-        winston.debug("[libturn] alice's relay address = " + relayAddressAlice.address + ':' + relayAddressAlice.port)
+        winston.debug("[turn-js] alice's srflx address = " + srflxAddressAlice.address + ':' + srflxAddressAlice.port)
+        winston.debug("[turn-js] alice's relay address = " + relayAddressAlice.address + ':' + relayAddressAlice.port)
         // allocate relaying session for bob
         return socketBob.allocateP()
       })
       .then(function (allocateAddress) {
         srflxAddressBob = allocateAddress.mappedAddress
         relayAddressBob = allocateAddress.relayedAddress
-        winston.debug("[libturn] bob's address = " + srflxAddressBob.address + ':' + srflxAddressBob.port)
-        winston.debug("[libturn] bob's relay address = " + relayAddressBob.address + ':' + relayAddressBob.port)
+        winston.debug("[turn-js] bob's address = " + srflxAddressBob.address + ':' + srflxAddressBob.port)
+        winston.debug("[turn-js] bob's relay address = " + relayAddressBob.address + ':' + relayAddressBob.port)
         // create permission for alice to send messages to bob
         return socketBob.createPermissionP(relayAddressAlice.address)
       })

@@ -2,7 +2,7 @@ var winston = require('winston')
 
 var DontFragmentAttr = function () {
   this.type = 0x001A
-  winston.debug("[libturn] don't fragment attr")
+  winston.debug("[turn-js] don't fragment attr")
 }
 
 DontFragmentAttr.prototype.encode = function () {

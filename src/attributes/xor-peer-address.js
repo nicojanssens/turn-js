@@ -3,7 +3,7 @@ var winston = require('winston')
 
 var XORPeerAddressAttr = function (address, port) {
   if (address === undefined) {
-    var error = '[libturn] invalid xor peer address attribute'
+    var error = '[turn-js] invalid xor peer address attribute'
     winston.error(error)
     throw new Error(error)
   }
@@ -11,12 +11,12 @@ var XORPeerAddressAttr = function (address, port) {
   this.port = port || 0
   this.type = 0x0012
 
-  winston.debug('[libturn] xor peer address attr: ' + this.address + ':' + this.port)
+  winston.debug('[turn-js] xor peer address attr: ' + this.address + ':' + this.port)
 }
 
 XORPeerAddressAttr.prototype.encode = function (magic, tid) {
   if (magic === undefined || tid === undefined) {
-    var error = '[libturn] invalid xorPeerAddressAttr.encode params'
+    var error = '[turn-js] invalid xorPeerAddressAttr.encode params'
     winston.error(error)
     throw new Error(error)
   }
