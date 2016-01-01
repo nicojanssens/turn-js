@@ -23,7 +23,7 @@ var defaultSoftwareTag = pjson.name + ' v' + pjson.version
 TurnSocket.DEFAULTS = {
   software: defaultSoftwareTag,
   lifetime: 3600,
-  dontFragment: true
+  dontFragment: false
 }
 
 /** TurnSocket opertions */
@@ -52,6 +52,8 @@ TurnSocket.prototype.allocateP = function () {
           return self.sendAllocateP(args)
         } else {
           // throw an error if error code !== 401
+          winston.error('[turn-js] allocate error: ' + errorCode.reason)
+          winston.error('[turn-js] allocate response: ' + JSON.stringify(allocateReply))
           throw new Error('[turn-js] allocate error: ' + errorCode.reason)
         }
       } else {
