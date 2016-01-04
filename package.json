@@ -13,6 +13,9 @@
     "email": "nico.b.janssens@gmail.com"
   },
   "license": "MIT",
+  "engines" : {
+    "node" : ">=4.x.x"
+  },
   "dependencies": {
     "merge": "*",
     "q": "*",
