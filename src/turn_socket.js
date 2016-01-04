@@ -1,3 +1,5 @@
+'use strict'
+
 var inherits = require('util').inherits
 var merge = require('merge')
 var Q = require('q')

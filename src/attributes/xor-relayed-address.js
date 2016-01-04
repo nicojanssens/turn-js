@@ -1,3 +1,5 @@
+'use strict'
+
 var addressAttr = require('stun-js').address
 var winston = require('winston')
 

@@ -1,3 +1,5 @@
+'use strict'
+
 var Attributes = require('../src/attributes')
 var Packet = require('../src/packet')
 var winston = require('winston')

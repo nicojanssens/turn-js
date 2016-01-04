@@ -1,3 +1,5 @@
+'use strict'
+
 var dgram = require('dgram')
 var TurnSocket = require('../src/turn_socket')
 var winston = require('winston')

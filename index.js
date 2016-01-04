@@ -1,3 +1,5 @@
+'use strict'
+
 var Attributes = require('./src/attributes')
 var ChannelData = require('./src/channel_data')
 var Packet = require('./src/packet')

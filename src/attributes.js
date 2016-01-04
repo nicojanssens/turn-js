@@ -1,3 +1,5 @@
+'use strict'
+
 var stun = require('stun-js')
 
 // STUN attributes

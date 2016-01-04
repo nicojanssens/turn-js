@@ -1,3 +1,5 @@
+'use strict'
+
 var padding = require('stun-js').padding
 var winston = require('winston')
 

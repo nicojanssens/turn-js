@@ -1,3 +1,5 @@
+'use strict'
+
 var turn = require('../index')
 var winston = require('winston')
 
