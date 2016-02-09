@@ -30,8 +30,8 @@ var argv = require('yargs')
 
 winston.level = argv.log
 
-var socketAlice = turn(argv.addr, argv.port, argv.user, argv.pwd)
-var socketBob = turn(argv.addr, argv.port, argv.user, argv.pwd)
+var clientAlice = turn(argv.addr, argv.port, argv.user, argv.pwd)
+var clientBob = turn(argv.addr, argv.port, argv.user, argv.pwd)
 var srflxAddressAlice, srflxAddressBob, relayAddressAlice, relayAddressBob
 var channelAlice, channelBob
 
@@ -42,7 +42,7 @@ var messagesSent = 0
 
 var sendRequest = function (onSuccess) {
   var bytes = new Buffer(testQuestion)
-  socketAlice.sendToChannel(
+  clientAlice.sendToChannel(
     bytes,
     channelBob,
     function () { // on success
@@ -59,7 +59,7 @@ var sendRequest = function (onSuccess) {
 
 var sendReply = function () {
   var bytes = new Buffer(testAnswer)
-  socketBob.sendToChannel(
+  clientBob.sendToChannel(
     bytes,
     channelAlice,
     function () { // on success
@@ -71,13 +71,13 @@ var sendReply = function () {
   )
 }
 
-socketAlice.on('relayed-message', function (bytes, peerAddress) {
+clientAlice.on('relayed-message', function (bytes, peerAddress) {
   var message = bytes.toString()
   winston.info('alice received response ' + message + ' from ' + JSON.stringify(peerAddress))
   if (messagesSent === testRuns) {
-    socketAlice.closeP()
+    clientAlice.closeP()
       .then(function () {
-        return socketBob.closeP()
+        return clientBob.closeP()
       })
       .then(function () {
         winston.info("that's all folks")
@@ -90,21 +90,21 @@ socketAlice.on('relayed-message', function (bytes, peerAddress) {
   }
 })
 
-socketBob.on('relayed-message', function (bytes, peerAddress) {
+clientBob.on('relayed-message', function (bytes, peerAddress) {
   var message = bytes.toString()
   winston.info('bob received question ' + message + ' from ' + JSON.stringify(peerAddress))
   sendReply()
 })
 
 // allocate session alice
-socketAlice.allocateP()
+clientAlice.allocateP()
   .then(function (allocateAddress) {
     srflxAddressAlice = allocateAddress.mappedAddress
     relayAddressAlice = allocateAddress.relayedAddress
     winston.debug("alice's srflx address = " + srflxAddressAlice.address + ':' + srflxAddressAlice.port)
     winston.debug("alice's relay address = " + relayAddressAlice.address + ':' + relayAddressAlice.port)
     // allocate session bob
-    return socketBob.allocateP()
+    return clientBob.allocateP()
   })
   .then(function (allocateAddress) {
     srflxAddressBob = allocateAddress.mappedAddress
@@ -112,21 +112,21 @@ socketAlice.allocateP()
     winston.debug("bob's address = " + srflxAddressBob.address + ':' + srflxAddressBob.port)
     winston.debug("bob's relay address = " + relayAddressBob.address + ':' + relayAddressBob.port)
     // create permission for alice to send messages to bob
-    return socketBob.createPermissionP(relayAddressAlice.address)
+    return clientBob.createPermissionP(relayAddressAlice.address)
   })
   .then(function () {
     //  create permission for bob to send messages to alice
-    return socketAlice.createPermissionP(relayAddressBob.address)
+    return clientAlice.createPermissionP(relayAddressBob.address)
   })
   .then(function () {
     // create channel from alice to bob
-    return socketAlice.bindChannelP(relayAddressBob.address, relayAddressBob.port)
+    return clientAlice.bindChannelP(relayAddressBob.address, relayAddressBob.port)
   })
   .then(function (channel) {
     channelBob = channel
     winston.debug("alice's channel to bob = " + channelBob)
     // create channel from bob to alice
-    return socketBob.bindChannelP(relayAddressAlice.address, relayAddressAlice.port)
+    return clientBob.bindChannelP(relayAddressAlice.address, relayAddressAlice.port)
   })
   .then(function (channel) {
     channelAlice = channel

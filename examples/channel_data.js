@@ -30,8 +30,8 @@ var argv = require('yargs')
 
 winston.level = argv.log
 
-var socketAlice = turn(argv.addr, argv.port, argv.user, argv.pwd)
-var socketBob = turn(argv.addr, argv.port, argv.user, argv.pwd)
+var clientAlice = turn(argv.addr, argv.port, argv.user, argv.pwd)
+var clientBob = turn(argv.addr, argv.port, argv.user, argv.pwd)
 var srflxAddressAlice, srflxAddressBob, relayAddressAlice, relayAddressBob
 
 var testQuestion = 'What is the meaning of life?'
@@ -41,7 +41,7 @@ var messagesSent = 0
 
 var sendRequest = function (onSuccess) {
   var bytes = new Buffer(testQuestion)
-  socketAlice.sendToRelay(
+  clientAlice.sendToRelay(
     bytes,
     relayAddressBob.address,
     relayAddressBob.port,
@@ -59,7 +59,7 @@ var sendRequest = function (onSuccess) {
 
 var sendReply = function () {
   var bytes = new Buffer(testAnswer)
-  socketBob.sendToRelay(
+  clientBob.sendToRelay(
     bytes,
     relayAddressAlice.address,
     relayAddressAlice.port,
@@ -72,13 +72,13 @@ var sendReply = function () {
   )
 }
 
-socketAlice.on('relayed-message', function (bytes, peerAddress) {
+clientAlice.on('relayed-message', function (bytes, peerAddress) {
   var message = bytes.toString()
   winston.info('alice received response: ' + message)
   if (messagesSent === testRuns) {
-    socketAlice.closeP()
+    clientAlice.closeP()
       .then(function () {
-        return socketBob.closeP()
+        return clientBob.closeP()
       })
       .then(function () {
         winston.info("that's all folks")
@@ -91,21 +91,21 @@ socketAlice.on('relayed-message', function (bytes, peerAddress) {
   }
 })
 
-socketBob.on('relayed-message', function (bytes, peerAddress) {
+clientBob.on('relayed-message', function (bytes, peerAddress) {
   var message = bytes.toString()
   winston.info('bob received question: ' + message)
   sendReply()
 })
 
 // allocate session alice
-socketAlice.allocateP()
+clientAlice.allocateP()
   .then(function (allocateAddress) {
     srflxAddressAlice = allocateAddress.mappedAddress
     relayAddressAlice = allocateAddress.relayedAddress
     winston.info("alice's srflx address = " + srflxAddressAlice.address + ':' + srflxAddressAlice.port)
     winston.info("alice's relay address = " + relayAddressAlice.address + ':' + relayAddressAlice.port)
     // allocate session bob
-    return socketBob.allocateP()
+    return clientBob.allocateP()
   })
   .then(function (allocateAddress) {
     srflxAddressBob = allocateAddress.mappedAddress
@@ -113,11 +113,11 @@ socketAlice.allocateP()
     winston.info("bob's address = " + srflxAddressBob.address + ':' + srflxAddressBob.port)
     winston.info("bob's relay address = " + relayAddressBob.address + ':' + relayAddressBob.port)
     // create permission for alice to send messages to bob
-    return socketBob.createPermissionP(relayAddressAlice.address)
+    return clientBob.createPermissionP(relayAddressAlice.address)
   })
   .then(function () {
     // create permission for bob to send messages to alice
-    return socketAlice.createPermissionP(relayAddressBob.address)
+    return clientAlice.createPermissionP(relayAddressBob.address)
   })
   .then(function () {
     // send request
