@@ -11,8 +11,8 @@ var Packet = require('./packet')
 var StunClient = require('stun-js').StunClient
 
 // Constructor
-var TurnClient = function (stunHost, stunPort, username, password, udpSocket) {
-  StunClient.call(this, stunHost, stunPort, udpSocket)
+var TurnClient = function (stunHost, stunPort, username, password, transport) {
+  StunClient.call(this, stunHost, stunPort, transport)
   this.username = username
   this.password = password
 }
@@ -325,9 +325,9 @@ TurnClient.prototype.sendAllocateP = function (args) {
 }
 
 TurnClient.prototype.sendAllocate = function (args, onSuccess, onFailure) {
-  winston.debug('[libstun] send allocate')
+  winston.debug('[turn-js] send allocate')
   if (onSuccess === undefined || onFailure === undefined) {
-    var error = '[libstun] send allocate callback handlers are undefined'
+    var error = '[turn-js] send allocate callback handlers are undefined'
     winston.error(error)
     throw new Error(error)
   }
@@ -350,7 +350,7 @@ TurnClient.prototype.sendCreatePermissionP = function (args) {
 TurnClient.prototype.sendCreatePermission = function (args, onSuccess, onFailure) {
   winston.debug('[turn-js] send create permission')
   if (onSuccess === undefined || onFailure === undefined) {
-    var error = '[libstun] send create permission callback handlers are undefined'
+    var error = '[turn-js] send create permission callback handlers are undefined'
     winston.error(error)
     throw new Error(error)
   }
@@ -373,7 +373,7 @@ TurnClient.prototype.sendChannelBindP = function (args) {
 TurnClient.prototype.sendChannelBind = function (args, onSuccess, onFailure) {
   winston.debug('[turn-js] send channel bind')
   if (onSuccess === undefined || onFailure === undefined) {
-    var error = '[libstun] send channel bind callback handlers are undefined'
+    var error = '[turn-js] send channel bind callback handlers are undefined'
     winston.error(error)
     throw new Error(error)
   }
@@ -396,7 +396,7 @@ TurnClient.prototype.sendRefreshP = function (args) {
 TurnClient.prototype.sendRefresh = function (args, onSuccess, onFailure) {
   winston.debug('[turn-js] send refresh')
   if (onSuccess === undefined || onFailure === undefined) {
-    var error = '[libstun] send refresh callback handlers are undefined'
+    var error = '[turn-js] send refresh callback handlers are undefined'
     winston.error(error)
     throw new Error(error)
   }
@@ -423,7 +423,7 @@ TurnClient.prototype.sendToRelayP = function (bytes, address, port) {
 TurnClient.prototype.sendToRelay = function (bytes, address, port, onSuccess, onFailure) {
   winston.debug('[turn-js] send data')
   if (onSuccess === undefined || onFailure === undefined) {
-    var error = '[libstun] send data callback handlers are undefined'
+    var error = '[turn-js] send data callback handlers are undefined'
     winston.error(error)
     throw new Error(error)
   }
@@ -449,7 +449,7 @@ TurnClient.prototype.sendToChannelP = function (bytes, channel) {
 TurnClient.prototype.sendToChannel = function (bytes, channel, onSuccess, onFailure) {
   winston.debug('[turn-js] send channel data')
   if (onSuccess === undefined || onFailure === undefined) {
-    var error = '[libstun] send channel data callback handlers are undefined'
+    var error = '[turn-js] send channel data callback handlers are undefined'
     winston.error(error)
     throw new Error(error)
   }

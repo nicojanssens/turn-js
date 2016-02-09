@@ -1,6 +1,7 @@
 'use strict'
 
 var dgram = require('dgram')
+var transports = require('stun-js').transports
 var TurnClient = require('../src/turn_client')
 var winston = require('winston')
 
@@ -35,34 +36,53 @@ var argv = require('yargs')
   .alias('h', 'help')
   .argv
 
-var testAddr = argv.addr
-var testPort = argv.port
-var testUser = argv.user
-var testPwd = argv.pwd
+var turnAddr = argv.addr
+var turnPort = argv.port
+var turnUser = argv.user
+var turnPwd = argv.pwd
+var socketPort = 12345
 winston.level = argv.log
 
 describe('#TURN operations', function () {
   this.timeout(5000)
 
-  it('should execute TURN allocate operation (using promises)', function () {
-    var client = new TurnClient(testAddr, testPort, testUser, testPwd)
-    return client.allocateP()
-      .then(function (result) {
-        expect(result).not.to.be.undefined
-        expect(result).to.have.property('mappedAddress')
-        expect(result.mappedAddress).to.have.property('address')
-        expect(result.mappedAddress).to.have.property('port')
-        // expect(result.mappedAddress.address).to.equal(testGW)
-        expect(result).to.have.property('relayedAddress')
-        expect(result.relayedAddress).to.have.property('address')
-        expect(result.relayedAddress).to.have.property('port')
-        expect(result.relayedAddress.address).to.equal(testAddr)
-        return client.closeP()
-      })
+  it('should execute TURN allocate operation over UDP socket using promises', function () {
+    // create socket
+    var socket = dgram.createSocket('udp4')
+    socket.on('message', function (message, rinfo) { //
+      done(new Error('message callback should not be fired'))
+    })
+    socket.on('error', function (error) {
+      done(error)
+    })
+    socket.on('listening', function () {
+      // create turn client and pass socket over
+      var transport = new transports.UDP(socket)
+      var client = new TurnClient(turnAddr, turnPort, turnUser, turnPwd, transport)
+      return client.allocateP()
+        .then(function (result) {
+          expect(result).not.to.be.undefined
+          expect(result).to.have.property('mappedAddress')
+          expect(result.mappedAddress).to.have.property('address')
+          expect(result.mappedAddress).to.have.property('port')
+          // expect(result.mappedAddress.address).to.equal(testGW)
+          expect(result).to.have.property('relayedAddress')
+          expect(result.relayedAddress).to.have.property('address')
+          expect(result.relayedAddress).to.have.property('port')
+          expect(result.relayedAddress.address).to.equal(turnAddr)
+          return client.closeP()
+        })
+        .then(function () {
+          expect(socket.listeners('message').length).to.equal(1)
+          expect(socket.listeners('error').length).to.equal(1)
+        })
+    })
+    socket.bind(socketPort)
   })
 
-  it('should execute TURN allocate operation (using callbacks)', function (done) {
-    var client = new TurnClient(testAddr, testPort, testUser, testPwd)
+  it('should execute TURN allocate operation over TCP socket using callbacks', function (done) {
+    var transport = new transports.TCP()
+    var client = new TurnClient(turnAddr, turnPort, turnUser, turnPwd, transport)
 
     var onError = function (error) {
       done(error)
@@ -77,7 +97,7 @@ describe('#TURN operations', function () {
       expect(result).to.have.property('relayedAddress')
       expect(result.relayedAddress).to.have.property('address')
       expect(result.relayedAddress).to.have.property('port')
-      expect(result.relayedAddress.address).to.equal(testAddr)
+      expect(result.relayedAddress.address).to.equal(turnAddr)
       client.close(
         function () {
           done()
@@ -89,9 +109,8 @@ describe('#TURN operations', function () {
     client.allocate(onReady, onError)
   })
 
-  it('should execute TURN allocate operation using a specified dgram client (using promises)', function () {
-    var udpclient = dgram.createclient('udp4')
-    var client = new TurnClient(testAddr, testPort, testUser, testPwd, udpclient)
+  it('should execute TURN allocate operation over unspecified UDP socket using promises', function () {
+    var client = new TurnClient(turnAddr, turnPort, turnUser, turnPwd)
     return client.allocateP()
       .then(function (result) {
         expect(result).not.to.be.undefined
@@ -102,44 +121,65 @@ describe('#TURN operations', function () {
         expect(result).to.have.property('relayedAddress')
         expect(result.relayedAddress).to.have.property('address')
         expect(result.relayedAddress).to.have.property('port')
-        expect(result.relayedAddress.address).to.equal(testAddr)
+        expect(result.relayedAddress.address).to.equal(turnAddr)
         return client.closeP()
       })
   })
 
-  it('should execute TURN allocate followed by refresh (using promises)', function () {
-    var client = new TurnClient(testAddr, testPort, testUser, testPwd)
-    var lifetime = 600
-    return client.allocateP()
-      .then(function (result) {
-        return client.refreshP(lifetime)
-      })
-      .then(function (duration) {
-        expect(duration).to.equal(lifetime)
-        return client.closeP()
-      })
+  it('should execute TURN allocate followed by refresh over UDP socket using promises', function () {
+    // create socket
+    var socket = dgram.createSocket('udp4')
+    socket.on('message', function (message, rinfo) { //
+      done(new Error('message callback should not be fired'))
+    })
+    socket.on('error', function (error) {
+      done(error)
+    })
+    socket.on('listening', function () {
+      // create stun client and pass socket over
+      var transport = new transports.UDP(socket)
+      var client = new TurnClient(turnAddr, turnPort, turnUser, turnPwd, transport)
+      var lifetime = 600
+      return client.allocateP()
+        .then(function (result) {
+          return client.refreshP(lifetime)
+        })
+        .then(function (duration) {
+          expect(duration).to.equal(lifetime)
+          return client.closeP()
+        })
+        .then(function () {
+          expect(socket.listeners('message').length).to.equal(1)
+          expect(socket.listeners('error').length).to.equal(1)
+        })
+    })
+    socket.bind(socketPort)
   })
 
-  it('should execute TURN allocate followed by create permission (using promises)', function () {
-    var client = new TurnClient(testAddr, testPort, testUser, testPwd)
-    var testAddress = '1.2.3.4'
+  it('should execute TURN allocate followed by create permission over TCP socket using promises', function () {
+    var transport = new transports.TCP()
+    var client = new TurnClient(turnAddr, turnPort, turnUser, turnPwd, transport)
+    var turnAddress = '1.2.3.4'
     var lifetime = 600
     return client.allocateP()
       .then(function (result) {
-        return client.createPermissionP(testAddress, lifetime)
+        return client.createPermissionP(turnAddress, lifetime)
       })
       .then(function () {
         return client.closeP()
       })
   })
 
-  it('should receive messages that are sent via relay server', function (done) {
+  it('should receive messages that are sent via relay server over TCP and UDP socket', function (done) {
     var testData = 'hello there'
     var testRuns = 10
     var messagesReceived = 0
 
-    var clientAlice = new TurnClient(testAddr, testPort, testUser, testPwd)
-    var clientBob = new TurnClient(testAddr, testPort, testUser, testPwd)
+    // alice's client uses UDP socket
+    var clientAlice = new TurnClient(turnAddr, turnPort, turnUser, turnPwd)
+    // bob's client uses TCP socket
+    var transportBob = new transports.TCP()
+    var clientBob = new TurnClient(turnAddr, turnPort, turnUser, turnPwd, transportBob)
     var srflxAddressAlice, srflxAddressBob, relayAddressAlice, relayAddressBob
 
     var sendTestMessageFromAliceToBob = function () {
@@ -204,13 +244,17 @@ describe('#TURN operations', function () {
       })
   })
 
-  it('should execute TURN channel binding and receive messages sent via these channels (using promises)', function (done) {
+  it('should execute TURN channel binding and receive messages sent via these channels over TCP and UDP socket using promises', function (done) {
     var testData = 'hello there'
     var testRuns = 10
     var messagesReceived = 0
 
-    var clientAlice = new TurnClient(testAddr, testPort, testUser, testPwd)
-    var clientBob = new TurnClient(testAddr, testPort, testUser, testPwd)
+    // alice's client uses TCP socket
+    var transportAlice = new transports.TCP()
+    var clientAlice = new TurnClient(turnAddr, turnPort, turnUser, turnPwd, transportAlice)
+    // bob's client uses UDP socket
+    var transportBob = new transports.TCP()
+    var clientBob = new TurnClient(turnAddr, turnPort, turnUser, turnPwd)
     var srflxAddressAlice, srflxAddressBob, relayAddressAlice, relayAddressBob
     var channelId
 
