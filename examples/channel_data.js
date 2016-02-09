@@ -1,5 +1,6 @@
 'use strict'
 
+var transports = require('stun-js').transports
 var turn = require('../index')
 var winston = require('winston')
 
@@ -19,9 +20,14 @@ var argv = require('yargs')
   .alias('w', 'pwd')
   .nargs('w', 1)
   .describe('w', 'TURN server user password')
-  .default('l', 'debug')
-  .choices('l', ['info', 'debug', 'warn', 'error', 'verbose', 'silly'])
+  .alias('t', 'transport')
+  .choices('t', ['tcp', 'udp'])
+  .default('t', 'udp')
+  .nargs('t', 1)
+  .describe('t', 'Transport protocol')
   .alias('l', 'log')
+  .choices('l', ['info', 'debug', 'warn', 'error', 'verbose', 'silly'])
+  .default('l', 'debug')
   .nargs('l', 1)
   .describe('l', 'Log level')
   .help('h')
@@ -30,8 +36,16 @@ var argv = require('yargs')
 
 winston.level = argv.log
 
-var clientAlice = turn(argv.addr, argv.port, argv.user, argv.pwd)
-var clientBob = turn(argv.addr, argv.port, argv.user, argv.pwd)
+var clientAlice, clientBob
+if (argv.transport === 'udp') {
+  clientAlice = turn(argv.addr, argv.port, argv.user, argv.pwd)
+  clientBob = turn(argv.addr, argv.port, argv.user, argv.pwd)
+} else {
+  var transportAlice = new transports.TCP()
+  clientAlice = turn(argv.addr, argv.port, argv.user, argv.pwd, transportAlice)
+  var transportBob = new transports.TCP()
+  clientBob = turn(argv.addr, argv.port, argv.user, argv.pwd, transportBob)
+}
 var srflxAddressAlice, srflxAddressBob, relayAddressAlice, relayAddressBob
 
 var testQuestion = 'What is the meaning of life?'
