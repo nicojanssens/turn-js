@@ -1,5 +1,6 @@
 'use strict'
 
+var padding = require('stun-js').padding
 var winston = require('winston')
 
 // channel-data class
@@ -20,6 +21,7 @@ var ChannelData = function (channel, bytes) {
   winston.debug('[turn-js] channel-data attrs: channel = ' + this.channel + ', data = ' + this.bytes)
 }
 
+// see RFC 5766, sct 11.5
 ChannelData.prototype.encode = function () {
   // create channel bytes
   var channelBytes = new Buffer(2)
@@ -29,8 +31,10 @@ ChannelData.prototype.encode = function () {
   // create length bytes
   var lengthBytes = new Buffer(2)
   lengthBytes.writeUInt16BE(dataBytes.length)
+  // padding
+  var paddingBytes = padding.getBytes(dataBytes.length)
   // glue everything together
-  var message = Buffer.concat([channelBytes, lengthBytes, dataBytes])
+  var message = Buffer.concat([channelBytes, lengthBytes, dataBytes, paddingBytes])
   return message
 }
 
@@ -46,7 +50,7 @@ ChannelData.decode = function (buffer) {
   var length = lengthBytes.readUInt16BE()
   // get data bytes
   var dataBytes = buffer.slice(4, 4 + length)
-
+  // return ChannelData object
   var channelData = new ChannelData(channel, dataBytes)
   return channelData
 }
