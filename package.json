@@ -17,16 +17,16 @@
     "node": ">=4.x.x"
   },
   "dependencies": {
-    "merge": "*",
-    "q": "*",
-    "stun-js": "*",
-    "winston": "*"
+    "merge": "^1.2.0",
+    "q": "^1.4.1",
+    "stun-js": "^0.2.0",
+    "winston": "^2.1.1"
   },
   "devDependencies": {
-    "chai": "*",
-    "chai-as-promised": "*",
-    "mocha": "*",
-    "yargs": "*"
+    "chai": "^3.5.0",
+    "chai-as-promised": "^5.2.0",
+    "mocha": "^2.4.5",
+    "yargs": "^3.32.0"
   },
   "repository": {
     "type": "git",
