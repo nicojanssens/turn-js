@@ -1,11 +1,12 @@
 'use strict'
 
-var winston = require('winston')
+var debug = require('debug')
+var debugLog = debug('turn-js:attributes')
 
 var RequestedTransportAttr = function () {
   this.value = 17 // UDP only
   this.type = 0x0019
-  winston.debug('[turn-js] requested transport attr: ' + this.value)
+  debugLog('requested transport attr: ' + this.value)
 }
 
 RequestedTransportAttr.prototype.encode = function () {

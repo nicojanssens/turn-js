@@ -1,25 +1,28 @@
 'use strict'
 
 var addressAttr = require('stun-js').address
-var winston = require('winston')
+
+var debug = require('debug')
+var debugLog = debug('turn-js:attributes')
+var errorLog = debug('turn-js:attributes:error')
 
 var XORRelayedAddressAttr = function (address, port) {
   if (address === undefined || port === undefined) {
-    var error = '[turn-js] invalid xor relayed address attribute'
-    winston.error(error)
+    var error = 'invalid xor relayed address attribute'
+    errorLog(error)
     throw new Error(error)
   }
   this.address = address
   this.port = port
   this.type = 0x0016
 
-  winston.debug('[turn-js] xor relayed address attr: ' + this.address + ':' + this.port)
+  debugLog('xor relayed address attr: ' + this.address + ':' + this.port)
 }
 
 XORRelayedAddressAttr.prototype.encode = function (magic, tid) {
   if (magic === undefined || tid === undefined) {
-    var error = '[turn-js] invalid xorRelayedAddressAttr.encode params'
-    winston.error(error)
+    var error = 'invalid xorRelayedAddressAttr.encode params'
+    errorLog(error)
     throw new Error(error)
   }
   // type

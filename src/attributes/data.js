@@ -1,17 +1,20 @@
 'use strict'
 
 var padding = require('stun-js').padding
-var winston = require('winston')
+
+var debug = require('debug')
+var debugLog = debug('turn-js:attributes')
+var errorLog = debug('turn-js:attributes:error')
 
 var DataAttr = function (bytes) {
   if (bytes === undefined) {
-    var error = '[turn-js] invalid bytes attribute'
-    winston.error(error)
+    var error = 'invalid bytes attribute'
+    errorLog(error)
     throw new Error(error)
   }
   this.bytes = bytes
   this.type = 0x0013
-  winston.debug('[turn-js] data attr: ' + this.bytes)
+  debugLog('data attr: ' + this.bytes)
 }
 
 DataAttr.prototype.encode = function () {

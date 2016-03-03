@@ -2,12 +2,9 @@
 
 var Attributes = require('../src/attributes')
 var Packet = require('../src/packet')
-var winston = require('winston')
 
 var chai = require('chai')
 var expect = chai.expect
-
-winston.level = 'debug'
 
 var username = 'foo'
 var software = 'turn-js-test'

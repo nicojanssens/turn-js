@@ -2,7 +2,6 @@
 
 var transports = require('stun-js').transports
 var turn = require('../index')
-var winston = require('winston')
 
 var argv = require('yargs')
   .usage('Usage: $0 [params]')
@@ -25,16 +24,9 @@ var argv = require('yargs')
   .default('t', 'udp')
   .nargs('t', 1)
   .describe('t', 'Transport protocol')
-  .alias('l', 'log')
-  .choices('l', ['info', 'debug', 'warn', 'error', 'verbose', 'silly'])
-  .default('l', 'debug')
-  .nargs('l', 1)
-  .describe('l', 'Log level')
   .help('h')
   .alias('h', 'help')
   .argv
-
-winston.level = argv.log
 
 var clientAlice, clientBob
 if (argv.transport === 'udp') {
@@ -60,13 +52,13 @@ var sendRequest = function (onSuccess) {
     bytes,
     channelBob,
     function () { // on success
-      winston.info('question sent from alice to bob')
+      console.log('question sent from alice to bob')
       if (onSuccess) {
         onSuccess()
       }
     },
     function (error) { // on error
-      winston.error(error)
+      console.error(error)
     }
   )
 }
@@ -77,24 +69,24 @@ var sendReply = function () {
     bytes,
     channelAlice,
     function () { // on success
-      winston.info('response sent from bob to alice')
+      console.log('response sent from bob to alice')
     },
     function (error) { // on failure
-      winston.error(error)
+      console.error(error)
     }
   )
 }
 
 clientAlice.on('relayed-message', function (bytes, peerAddress) {
   var message = bytes.toString()
-  winston.info('alice received response ' + message + ' from ' + JSON.stringify(peerAddress))
+  console.log('alice received response ' + message + ' from ' + JSON.stringify(peerAddress))
   if (messagesSent === testRuns) {
     clientAlice.closeP()
       .then(function () {
         return clientBob.closeP()
       })
       .then(function () {
-        winston.info("that's all folks")
+        console.log("that's all folks")
         process.exit(0)
       })
   } else {
@@ -106,7 +98,7 @@ clientAlice.on('relayed-message', function (bytes, peerAddress) {
 
 clientBob.on('relayed-message', function (bytes, peerAddress) {
   var message = bytes.toString()
-  winston.info('bob received question ' + message + ' from ' + JSON.stringify(peerAddress))
+  console.log('bob received question ' + message + ' from ' + JSON.stringify(peerAddress))
   sendReply()
 })
 
@@ -115,16 +107,16 @@ clientAlice.allocateP()
   .then(function (allocateAddress) {
     srflxAddressAlice = allocateAddress.mappedAddress
     relayAddressAlice = allocateAddress.relayedAddress
-    winston.debug("alice's srflx address = " + srflxAddressAlice.address + ':' + srflxAddressAlice.port)
-    winston.debug("alice's relay address = " + relayAddressAlice.address + ':' + relayAddressAlice.port)
+    console.log("alice's srflx address = " + srflxAddressAlice.address + ':' + srflxAddressAlice.port)
+    console.log("alice's relay address = " + relayAddressAlice.address + ':' + relayAddressAlice.port)
     // allocate session bob
     return clientBob.allocateP()
   })
   .then(function (allocateAddress) {
     srflxAddressBob = allocateAddress.mappedAddress
     relayAddressBob = allocateAddress.relayedAddress
-    winston.debug("bob's address = " + srflxAddressBob.address + ':' + srflxAddressBob.port)
-    winston.debug("bob's relay address = " + relayAddressBob.address + ':' + relayAddressBob.port)
+    console.log("bob's address = " + srflxAddressBob.address + ':' + srflxAddressBob.port)
+    console.log("bob's relay address = " + relayAddressBob.address + ':' + relayAddressBob.port)
     // create permission for alice to send messages to bob
     return clientBob.createPermissionP(relayAddressAlice.address)
   })
@@ -138,13 +130,13 @@ clientAlice.allocateP()
   })
   .then(function (channel) {
     channelBob = channel
-    winston.debug("alice's channel to bob = " + channelBob)
+    console.log("alice's channel to bob = " + channelBob)
     // create channel from bob to alice
     return clientBob.bindChannelP(relayAddressAlice.address, relayAddressAlice.port)
   })
   .then(function (channel) {
     channelAlice = channel
-    winston.debug("bob's channel to alice = " + channelAlice)
+    console.log("bob's channel to alice = " + channelAlice)
     // send test message
     sendRequest(function () {
       messagesSent++

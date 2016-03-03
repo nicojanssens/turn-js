@@ -3,7 +3,6 @@
 var dgram = require('dgram')
 var transports = require('stun-js').transports
 var TurnClient = require('../src/turn_client')
-var winston = require('winston')
 
 var chai = require('chai')
 var chaiAsPromised = require('chai-as-promised')
@@ -27,11 +26,6 @@ var argv = require('yargs')
   .alias('w', 'pwd')
   .nargs('w', 1)
   .describe('w', 'TURN server user password')
-  .default('l', 'debug')
-  .choices('l', ['info', 'debug', 'warn', 'error', 'verbose', 'silly'])
-  .alias('l', 'log')
-  .nargs('l', 1)
-  .describe('l', 'Log level')
   .help('h')
   .alias('h', 'help')
   .argv
@@ -41,7 +35,6 @@ var turnPort = argv.port
 var turnUser = argv.user
 var turnPwd = argv.pwd
 var socketPort = 12345
-winston.level = argv.log
 
 describe('#TURN operations', function () {
   this.timeout(5000)
@@ -189,7 +182,7 @@ describe('#TURN operations', function () {
         relayAddressBob.address,
         relayAddressBob.port,
         function () {
-          winston.debug('[turn-js] message sent to ' + relayAddressBob.address + ':' + relayAddressBob.port)
+          console.log('message sent to ' + relayAddressBob.address + ':' + relayAddressBob.port)
         }, // on success
         function (error) {
           done(error)
@@ -201,7 +194,7 @@ describe('#TURN operations', function () {
     clientBob.on('relayed-message', function (bytes, peerAddress) {
       var message = bytes.toString()
       expect(message).to.equal(testData)
-      winston.debug('[turn-js] receiving test message ' + message)
+      console.log('receiving test message ' + message)
       messagesReceived++
       if (messagesReceived === testRuns) {
         clientBob.closeP()
@@ -221,16 +214,16 @@ describe('#TURN operations', function () {
       .then(function (allocateAddress) {
         srflxAddressAlice = allocateAddress.mappedAddress
         relayAddressAlice = allocateAddress.relayedAddress
-        winston.debug("[turn-js] alice's srflx address = " + srflxAddressAlice.address + ':' + srflxAddressAlice.port)
-        winston.debug("[turn-js] alice's relay address = " + relayAddressAlice.address + ':' + relayAddressAlice.port)
+        console.log("alice's srflx address = " + srflxAddressAlice.address + ':' + srflxAddressAlice.port)
+        console.log("alice's relay address = " + relayAddressAlice.address + ':' + relayAddressAlice.port)
         // allocate relaying session for bob
         return clientBob.allocateP()
       })
       .then(function (allocateAddress) {
         srflxAddressBob = allocateAddress.mappedAddress
         relayAddressBob = allocateAddress.relayedAddress
-        winston.debug("[turn-js] bob's address = " + srflxAddressBob.address + ':' + srflxAddressBob.port)
-        winston.debug("[turn-js] bob's relay address = " + relayAddressBob.address + ':' + relayAddressBob.port)
+        console.log("bob's address = " + srflxAddressBob.address + ':' + srflxAddressBob.port)
+        console.log("bob's relay address = " + relayAddressBob.address + ':' + relayAddressBob.port)
         // create permission for alice to send messages to bob
         return clientBob.createPermissionP(relayAddressAlice.address)
       })
@@ -264,7 +257,7 @@ describe('#TURN operations', function () {
         bytes,
         channelId,
         function () {
-          winston.debug('[turn-js] message sent to channel ' + channelId)
+          console.log('message sent to channel ' + channelId)
         },
         function (error) {
           done(error)
@@ -276,7 +269,7 @@ describe('#TURN operations', function () {
     clientBob.on('relayed-message', function (bytes, peerAddress) {
       var message = bytes.toString()
       expect(message).to.equal(testData)
-      winston.debug('[turn-js] receiving test message ' + message)
+      console.log('receiving test message ' + message)
       messagesReceived++
       if (messagesReceived === testRuns) {
         clientBob.closeP()
@@ -296,16 +289,16 @@ describe('#TURN operations', function () {
       .then(function (allocateAddress) {
         srflxAddressAlice = allocateAddress.mappedAddress
         relayAddressAlice = allocateAddress.relayedAddress
-        winston.debug("[turn-js] alice's srflx address = " + srflxAddressAlice.address + ':' + srflxAddressAlice.port)
-        winston.debug("[turn-js] alice's relay address = " + relayAddressAlice.address + ':' + relayAddressAlice.port)
+        console.log("alice's srflx address = " + srflxAddressAlice.address + ':' + srflxAddressAlice.port)
+        console.log("alice's relay address = " + relayAddressAlice.address + ':' + relayAddressAlice.port)
         // allocate relaying session for bob
         return clientBob.allocateP()
       })
       .then(function (allocateAddress) {
         srflxAddressBob = allocateAddress.mappedAddress
         relayAddressBob = allocateAddress.relayedAddress
-        winston.debug("[turn-js] bob's address = " + srflxAddressBob.address + ':' + srflxAddressBob.port)
-        winston.debug("[turn-js] bob's relay address = " + relayAddressBob.address + ':' + relayAddressBob.port)
+        console.log("bob's address = " + srflxAddressBob.address + ':' + srflxAddressBob.port)
+        console.log("bob's relay address = " + relayAddressBob.address + ':' + relayAddressBob.port)
         // create permission for alice to send messages to bob
         return clientBob.createPermissionP(relayAddressAlice.address)
       })

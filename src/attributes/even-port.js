@@ -1,17 +1,20 @@
 'use strict'
 
 var padding = require('stun-js').padding
-var winston = require('winston')
+
+var debug = require('debug')
+var debugLog = debug('turn-js:attributes')
+var errorLog = debug('turn-js:attributes:error')
 
 var EvenPortAttr = function (reserveNextHigherPortNumber) {
   if (typeof reserveNextHigherPortNumber !== 'boolean') {
-    var error = '[turn-js] invalid even port attribute'
-    winston.error(error)
+    var error = 'invalid even port attribute'
+    errorLog(error)
     throw new Error(error)
   }
   this.reserveNextHigherPortNumber = reserveNextHigherPortNumber
   this.type = 0x0018
-  winston.debug('[turn-js] even port attr w reserve-next-higher-port-number bit set to ' + this.reserveNextHigherPortNumber)
+  debugLog('even port attr w reserve-next-higher-port-number bit set to ' + this.reserveNextHigherPortNumber)
 }
 
 EvenPortAttr.prototype.encode = function () {

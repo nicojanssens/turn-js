@@ -1,24 +1,27 @@
 'use strict'
 
 var padding = require('stun-js').padding
-var winston = require('winston')
+
+var debug = require('debug')
+var debugLog = debug('turn-js')
+var errorLog = debug('turn-js:error')
 
 // channel-data class
 var ChannelData = function (channel, bytes) {
   if (bytes === undefined) {
-    var undefinedBytesError = '[turn-js] invalid channel-data attribute: bytes = undefined'
-    winston.error(undefinedBytesError)
+    var undefinedBytesError = 'invalid channel-data attribute: bytes = undefined'
+    errorLog(undefinedBytesError)
     throw new Error(undefinedBytesError)
   }
   if (channel === undefined) {
-    var undefinedChannelError = '[turn-js] invalid channel-data attribute: channel = undefined'
-    winston.error(undefinedChannelError)
+    var undefinedChannelError = 'invalid channel-data attribute: channel = undefined'
+    errorLog(undefinedChannelError)
     throw new Error(undefinedChannelError)
   }
   this.channel = channel
   this.bytes = bytes
 
-  winston.debug('[turn-js] channel-data attrs: channel = ' + this.channel + ', data = ' + this.bytes)
+  debugLog('channel-data attrs: channel = ' + this.channel + ', data = ' + this.bytes)
 }
 
 // see RFC 5766, sct 11.5
