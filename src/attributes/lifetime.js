@@ -1,17 +1,19 @@
 'use strict'
 
-var winston = require('winston')
+var debug = require('debug')
+var debugLog = debug('turn-js:attributes')
+var errorLog = debug('turn-js:attributes:error')
 
 var LifetimeAttr = function (duration) {
   if (typeof duration !== 'number') {
-    var error = '[turn-js] invalid lifetime attribute'
-    winston.error(error)
+    var error = 'invalid lifetime attribute'
+    errorLog(error)
     throw new Error(error)
   }
   this.duration = duration
   this.type = 0x000D
 
-  winston.debug('[turn-js] lifetime attr: ' + this.duration)
+  debugLog('lifetime attr: ' + this.duration)
 }
 
 LifetimeAttr.prototype.encode = function () {
@@ -32,7 +34,7 @@ LifetimeAttr.prototype.encode = function () {
 
 LifetimeAttr.decode = function (attrBytes) {
   if (attrBytes.length !== 4) {
-    throw new Error('[turn-js] invalid lifetime attribute')
+    throw new Error('invalid lifetime attribute')
   }
   var duration = attrBytes.readUInt32BE(0)
   return new LifetimeAttr(duration)

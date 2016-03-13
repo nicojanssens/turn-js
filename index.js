@@ -3,14 +3,17 @@
 var Attributes = require('./src/attributes')
 var ChannelData = require('./src/channel_data')
 var Packet = require('./src/packet')
-var TurnSocket = require('./src/turn_socket')
+var transports = require('stun-js').transports
+var TurnClient = require('./src/turn_client')
 
-module.exports = function createSocket (address, port, user, pwd, udpSocket) {
-  return new TurnSocket(address, port, user, pwd, udpSocket)
+module.exports = function createClient (address, port, user, pwd, transport) {
+  return new TurnClient(address, port, user, pwd, transport)
 }
 
 // TURN components
 module.exports.Attributes = Attributes
 module.exports.ChannelData = ChannelData
 module.exports.Packet = Packet
-module.exports.TurnSocket = TurnSocket
+module.exports.TurnClient = TurnClient
+// STUN transports
+module.exports.transports = transports
