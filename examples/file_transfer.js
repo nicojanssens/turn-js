@@ -93,15 +93,15 @@ var argv = require('yargs')
     })
     .then(function (channel) {
       channelAlice = channel
-      // console.log("bob's channel to alice = " + channelAlice)
-      // // send filename from alice to bob
-      // var filename = path.basename(argv.file)
-      // console.log('alice sends filename ' + filename + ' to bob')
-      // var typeByte = new Buffer(1)
-      // typeByte.writeUInt8(startMessageType)
-      // var filenameBytes = new Buffer(filename)
-      // var bytes = Buffer.concat([typeByte, filenameBytes])
-      // return clientAlice.sendToChannelP(bytes, channelBob)
+      console.log("bob's channel to alice = " + channelAlice)
+      // send filename from alice to bob
+      var filename = path.basename(argv.file)
+      console.log('alice sends filename ' + filename + ' to bob')
+      var typeByte = new Buffer(1)
+      typeByte.writeUInt8(startMessageType)
+      var filenameBytes = new Buffer(filename)
+      var bytes = Buffer.concat([typeByte, filenameBytes])
+      return clientAlice.sendToChannelP(bytes, channelBob)
     })
     .then(function () {
       // if tcp -> max length channel data buffer is 65535, and we need one type byte
