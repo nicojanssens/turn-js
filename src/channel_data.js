@@ -21,7 +21,7 @@ var ChannelData = function (channel, bytes) {
   this.channel = channel
   this.bytes = bytes
 
-  debugLog('channel-data attrs: channel = ' + this.channel + ', data = ' + this.bytes)
+  debugLog('channel-data attrs: channel = ' + this.channel)
 }
 
 // see RFC 5766, sct 11.5
