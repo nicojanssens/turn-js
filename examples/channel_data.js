@@ -90,6 +90,9 @@ clientAlice.on('relayed-message', function (bytes, peerAddress) {
         console.log("that's all folks")
         process.exit(0)
       })
+      .catch(function (error) {
+        console.log('ERROR: ' + error)
+      })
   } else {
     sendRequest(function () {
       messagesSent++

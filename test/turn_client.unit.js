@@ -69,6 +69,9 @@ describe('#TURN operations', function () {
           expect(socket.listeners('message').length).to.equal(1)
           expect(socket.listeners('error').length).to.equal(1)
         })
+        .catch(function (error) {
+          done(error)
+        })
     })
     socket.bind(socketPort)
   })
@@ -117,6 +120,9 @@ describe('#TURN operations', function () {
         expect(result.relayedAddress.address).to.equal(turnAddr)
         return client.closeP()
       })
+      .catch(function (error) {
+        done(error)
+      })
   })
 
   it('should execute TURN allocate followed by refresh over UDP socket using promises', function () {
@@ -144,6 +150,9 @@ describe('#TURN operations', function () {
         .then(function () {
           expect(socket.listeners('message').length).to.equal(1)
           expect(socket.listeners('error').length).to.equal(1)
+        })
+        .catch(function (error) {
+          done(error)
         })
     })
     socket.bind(socketPort)
@@ -204,6 +213,9 @@ describe('#TURN operations', function () {
           .then(function () {
             done()
           })
+          .catch(function (error) {
+            done(error)
+          })
       } else {
         sendTestMessageFromAliceToBob()
       }
@@ -234,6 +246,9 @@ describe('#TURN operations', function () {
       .then(function () {
         // send test message
         sendTestMessageFromAliceToBob()
+      })
+      .catch(function (error) {
+        done(error)
       })
   })
 
@@ -279,6 +294,9 @@ describe('#TURN operations', function () {
           .then(function () {
             done()
           })
+          .catch(function (error) {
+            done(error)
+          })
       } else {
         sendTestMessageFromAliceToBob()
       }
@@ -319,6 +337,9 @@ describe('#TURN operations', function () {
       .then(function (anotherChannel) {
         // send test message
         sendTestMessageFromAliceToBob()
+      })
+      .catch(function (error) {
+        done (error)
       })
   })
 })
