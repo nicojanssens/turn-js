@@ -10,12 +10,12 @@ var Packet = require('./packet')
 var StunClient = require('stun-js').StunClient
 
 var debug = require('debug')
-var debugLog = debug('turn-js:attributes')
-var errorLog = debug('turn-js:attributes:error')
+var debugLog = debug('turn-js')
+var errorLog = debug('turn-js:error')
 
 // Constructor
-var TurnClient = function (stunHost, stunPort, username, password, transport) {
-  StunClient.call(this, stunHost, stunPort, transport)
+var TurnClient = function (host, port, username, password, transport) {
+  StunClient.call(this, host, port, transport)
   this.username = username
   this.password = password
 }
@@ -314,6 +314,7 @@ TurnClient.prototype.close = function (onSuccess, onFailure) {
       onSuccess()
     })
     .catch(function (error) {
+      errorLog(error)
       onFailure(error)
     })
 }
@@ -486,6 +487,7 @@ TurnClient.prototype.onOtherIncomingMessage = function (bytes, rinfo) {
   var channelData = ChannelData.decode(bytes)
   // if this is a channel-data message
   if (channelData) {
+    debugLog('receiving channel data packet')
     var dataBytes = channelData.bytes
     this.emit('relayed-message', dataBytes, rinfo, channelData.channel)
   } else {
