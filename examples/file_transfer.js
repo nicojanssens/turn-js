@@ -51,11 +51,28 @@ var argv = require('yargs')
   var dataMessageType = 0x01
   var endMessageType = 0x10
 
+  var writeStream
+
   // incoming messages
   clientBob.on('relayed-message', function (bytes, peerAddress) {
-    process.nextTick(function() {
-      console.log('bob received ' + bytes.length + ' bytes from alice')
-    })
+    console.log('bob received ' + bytes.length + ' byte(s) from alice')
+    var type = bytes.slice(0, 1).readUInt8()
+    var data = bytes.slice(1, bytes.length)
+    switch(type) {
+      case startMessageType:
+        var filename = 'copy.' + data.toString()
+        writeStream = fs.createWriteStream(filename)
+        break
+      case dataMessageType:
+        writeStream.write(data, 'binary')
+        break
+      case endMessageType:
+        writeStream.end()
+        process.exit(0)
+        break
+      default:
+        console.error("Add dazed and confused, don't know how to process message type " + type)
+    }
   })
 
 
@@ -135,7 +152,6 @@ var argv = require('yargs')
           channelBob,
           function () { // on success
             console.log('alice sent end message to bob')
-
           },
           function (error) { // on failure
             console.error(error)
