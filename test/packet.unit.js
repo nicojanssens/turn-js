@@ -23,7 +23,8 @@ describe('#TURN operations', function () {
     // encode test packet
     var data = packet.encode()
     // decode test packet
-    var decodedPacket = Packet.decode(data)
+    var turnDecoding = Packet.decode(data)
+    var decodedPacket = turnDecoding.packet
     // verify method
     expect(decodedPacket.method).to.equal(Packet.METHOD.ALLOCATE)
     expect(decodedPacket.type).to.equal(Packet.TYPE.REQUEST)
@@ -37,6 +38,9 @@ describe('#TURN operations', function () {
     expect(decodedPacket.getAttribute(Attributes.REQUESTED_TRANSPORT)).not.to.be.undefined
     expect(decodedPacket.getAttribute(Attributes.REQUESTED_TRANSPORT).value).to.equal(17)
     expect(decodedPacket.getAttribute(Attributes.DONT_FRAGMENT)).not.to.be.undefined
+    // check remaining bytes
+    var remainingBytes = turnDecoding.remainingBytes
+    expect(remainingBytes.length).to.equal(0)
     // all good
     done()
   })
@@ -56,7 +60,8 @@ describe('#TURN operations', function () {
     // encode test packet
     var data = packet.encode()
     // decode test packet
-    var decodedPacket = Packet.decode(data)
+    var turnDecoding = Packet.decode(data)
+    var decodedPacket = turnDecoding.packet
     // verify method
     expect(decodedPacket.method).to.equal(Packet.METHOD.CREATEPERMISSION)
     expect(decodedPacket.type).to.equal(Packet.TYPE.INDICATION)
@@ -64,6 +69,9 @@ describe('#TURN operations', function () {
     expect(decodedPacket.getAttribute(Attributes.USERNAME)).not.to.be.undefined
     expect(decodedPacket.getAttribute(Attributes.USERNAME).name).to.equal(username)
     expect(decodedPacket.getAttribute(Attributes.XOR_PEER_ADDRESS)).not.to.be.undefined
+    // check remaining bytes
+    var remainingBytes = turnDecoding.remainingBytes
+    expect(remainingBytes.length).to.equal(0)
     // all good
     done()
   })

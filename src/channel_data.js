@@ -41,26 +41,48 @@ ChannelData.prototype.encode = function () {
   return message
 }
 
-ChannelData.decode = function (buffer) {
-  if (!ChannelData._isChannelDataPacket(buffer)) {
+ChannelData.decode = function (bytes) {
+  // check if packet starts with 0b01
+  if (!ChannelData._isChannelDataPacket(bytes)) {
+    debugLog('this is not a ChannelData packet')
     return
   }
   // decode channel
-  var channelBytes = buffer.slice(0, 2)
+  var channelBytes = bytes.slice(0, 2)
   var channel = channelBytes.readUInt16BE()
+  // check channel number
+  if (channel < 0x4000) {
+    debugLog('channel numbers < 0x4000 are reserved and not available for use, since they conflict with the STUN header')
+    return
+  }
+  if (channel > 0x7FFF) {
+    debugLog('channel numbers > 0x7FFF are unassigned')
+    return
+  }
   // decode data length
-  var lengthBytes = buffer.slice(2, 4)
-  var length = lengthBytes.readUInt16BE()
+  var lengthBytes = bytes.slice(2, 4)
+  var dataLength = lengthBytes.readUInt16BE()
+  var packetLength = 4 + dataLength + (4 - dataLength % 4) // header + data + padding to the nearest multiple of 4
+  // check if buffer contains enough bytes to parse entire channel data frame
+  if (bytes.length < packetLength) {
+    debugLog('not enough bytes to parse channel data, giving up')
+    return
+  }
   // get data bytes
-  var dataBytes = buffer.slice(4, 4 + length)
+  var dataBytes = bytes.slice(4, 4 + dataLength)
   // return ChannelData object
-  var channelData = new ChannelData(channel, dataBytes)
-  return channelData
+  var packet = new ChannelData(channel, dataBytes)
+  var remainingBytes = bytes.slice(packetLength, bytes.length) // padding bytes are dropped
+  var result = {
+    packet: packet,
+    remainingBytes: remainingBytes
+  }
+  return result
 }
 
 // check if this is a channel data packet (starts with 0b01)
-ChannelData._isChannelDataPacket = function (buffer) {
-  var block = buffer.readUInt8(0)
+ChannelData._isChannelDataPacket = function (bytes) {
+  var block = bytes.readUInt8(0)
   var bit1 = containsFlag(block, 0x80)
   var bit2 = containsFlag(block, 0x40)
   return (!bit1 && bit2)

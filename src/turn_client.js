@@ -482,14 +482,17 @@ TurnClient.prototype.onIncomingStunIndication = function (stunPacket, rinfo) {
   }
 }
 
-// Incoming message that is different from regular STUN packets
+// Incoming data that is different from regular STUN packets
 TurnClient.prototype.onOtherIncomingMessage = function (bytes, rinfo) {
-  var channelData = ChannelData.decode(bytes)
-  // if this is a channel-data message
-  if (channelData) {
+  // try to decode a channel data packet
+  var channelDataDecoding = ChannelData.decode(bytes)
+  if (channelDataDecoding) {
+    // keep remaining bytes
+    this._availableBytes = channelDataDecoding.remainingBytes
+    // dispatch packet content
     debugLog('receiving channel data packet')
-    var dataBytes = channelData.bytes
-    this.emit('relayed-message', dataBytes, rinfo, channelData.channel)
+    var dataBytes = channelDataDecoding.packet.bytes
+    this.emit('relayed-message', dataBytes, rinfo, channelDataDecoding.packet.channel)
   } else {
     TurnClient.super_.prototype.onOtherIncomingMessage.call(this, bytes, rinfo)
   }
