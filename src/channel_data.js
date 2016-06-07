@@ -78,7 +78,7 @@ ChannelData.decode = function (bytes, isFrame) {
   // get data bytes
   var dataBytes = bytes.slice(ChannelData.HEADER_LENGTH, ChannelData.HEADER_LENGTH + dataLength)
   // get padding bytes if this is not a frame (i.e. bytes originate from TCP connection) -- and if present, then silently discard them
-  var packetLength = ChannelData.HEADER_LENGTH + dataLength + (4 - dataLength % 4) // header + data + padding to the nearest multiple of 4
+  var packetLength = ChannelData.HEADER_LENGTH + dataLength + ((4 - dataLength % 4) % 4) // header + data + padding to the nearest multiple of 4
   if (!isFrame && bytes.length < packetLength) {
     debugLog('not enough bytes to parse channel data padding bytes, giving up')
     return
