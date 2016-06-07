@@ -299,7 +299,7 @@ TurnClient.prototype.closeP = function () {
   var self = this
   return this.refreshP(0)
     .then(function () {
-      TurnClient.super_.prototype.close.call(self)
+      return TurnClient.super_.prototype.closeP.call(self)
     })
 }
 
@@ -483,18 +483,24 @@ TurnClient.prototype.onIncomingStunIndication = function (stunPacket, rinfo) {
 }
 
 // Incoming data that is different from regular STUN packets
-TurnClient.prototype.onOtherIncomingMessage = function (bytes, rinfo) {
+TurnClient.prototype.onOtherIncomingMessage = function (bytes, rinfo, isFrame) {
   // try to decode a channel data packet
-  var channelDataDecoding = ChannelData.decode(bytes)
+  var channelDataDecoding = ChannelData.decode(bytes, isFrame)
   if (channelDataDecoding) {
-    // keep remaining bytes
+    debugLog('incoming channel data packet')
+    // do we expect remaining bytes?
+    if (isFrame && channelDataDecoding.remainingBytes.length !== 0) {
+      var error = 'not expecting remaining bytes after processing full frame packet'
+      errorLog(error)
+      throw new Error(error)
+    }
+    // store remaining bytes
     this._availableBytes = channelDataDecoding.remainingBytes
     // dispatch packet content
-    debugLog('receiving channel data packet')
     var dataBytes = channelDataDecoding.packet.bytes
     this.emit('relayed-message', dataBytes, rinfo, channelDataDecoding.packet.channel)
   } else {
-    TurnClient.super_.prototype.onOtherIncomingMessage.call(this, bytes, rinfo)
+    TurnClient.super_.prototype.onOtherIncomingMessage.call(this, bytes, rinfo, isFrame)
   }
 }
 

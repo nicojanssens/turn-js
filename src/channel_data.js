@@ -24,6 +24,9 @@ var ChannelData = function (channel, bytes) {
   debugLog('channel-data attrs: channel = ' + this.channel)
 }
 
+// packet header length
+ChannelData.HEADER_LENGTH = 4
+
 // see RFC 5766, sct 11.5
 ChannelData.prototype.encode = function () {
   // create channel bytes
@@ -41,10 +44,15 @@ ChannelData.prototype.encode = function () {
   return message
 }
 
-ChannelData.decode = function (bytes) {
+ChannelData.decode = function (bytes, isFrame) {
   // check if packet starts with 0b01
   if (!ChannelData._isChannelDataPacket(bytes)) {
     debugLog('this is not a ChannelData packet')
+    return
+  }
+  // check if buffer contains enough bytes to parse header
+  if (bytes.length < ChannelData.HEADER_LENGTH) {
+    debugLog('not enough bytes to parse ChannelData header, giving up')
     return
   }
   // decode channel
@@ -60,23 +68,33 @@ ChannelData.decode = function (bytes) {
     return
   }
   // decode data length
-  var lengthBytes = bytes.slice(2, 4)
+  var lengthBytes = bytes.slice(2, ChannelData.HEADER_LENGTH)
   var dataLength = lengthBytes.readUInt16BE()
-  var packetLength = 4 + dataLength + (4 - dataLength % 4) // header + data + padding to the nearest multiple of 4
-  // check if buffer contains enough bytes to parse entire channel data frame
-  if (bytes.length < packetLength) {
+  // check if buffer contains enough bytes to parse channel data
+  if (bytes.length < dataLength) {
     debugLog('not enough bytes to parse channel data, giving up')
     return
   }
   // get data bytes
-  var dataBytes = bytes.slice(4, 4 + dataLength)
-  // return ChannelData object
-  var packet = new ChannelData(channel, dataBytes)
-  var remainingBytes = bytes.slice(packetLength, bytes.length) // padding bytes are dropped
-  var result = {
-    packet: packet,
-    remainingBytes: remainingBytes
+  var dataBytes = bytes.slice(ChannelData.HEADER_LENGTH, ChannelData.HEADER_LENGTH + dataLength)
+  // get padding bytes if this is not a frame (i.e. bytes originate from TCP connection) -- and if present, then silently discard them
+  var packetLength = ChannelData.HEADER_LENGTH + dataLength + (4 - dataLength % 4) // header + data + padding to the nearest multiple of 4
+  if (!isFrame && bytes.length < packetLength) {
+    debugLog('not enough bytes to parse channel data padding bytes, giving up')
+    return
   }
+  var paddingBytes = bytes.slice(ChannelData.HEADER_LENGTH + dataLength, packetLength) // padding bytes, if any, are silently discarded
+  // generate result
+  var result = {}
+  result.packet = new ChannelData(channel, dataBytes)
+  result.remainingBytes = bytes.slice(packetLength, bytes.length)
+  // do we expect remaining bytes?
+  if (isFrame && result.remainingBytes.length !== 0) {
+    var error = 'not expecting remaining bytes after processing full frame packet'
+    errorLog(error)
+    throw new Error(error)
+  }
+  // done
   return result
 }
 
