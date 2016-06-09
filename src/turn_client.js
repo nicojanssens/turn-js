@@ -18,6 +18,12 @@ var TurnClient = function (host, port, username, password, transport) {
   StunClient.call(this, host, port, transport)
   this.username = username
   this.password = password
+
+  // register channel_data decoder
+  this._decoders.push({
+    decoder: ChannelData.decode,
+    listener: this.dispatchChannelDataPacket.bind(this)
+  })
 }
 
 // Inherit from StunClient
@@ -482,26 +488,9 @@ TurnClient.prototype.onIncomingStunIndication = function (stunPacket, rinfo) {
   }
 }
 
-// Incoming data that is different from regular STUN packets
-TurnClient.prototype.onOtherIncomingMessage = function (bytes, rinfo, isFrame) {
-  // try to decode a channel data packet
-  var channelDataDecoding = ChannelData.decode(bytes, isFrame)
-  if (channelDataDecoding) {
-    debugLog('incoming channel data packet')
-    // do we expect remaining bytes?
-    if (isFrame && channelDataDecoding.remainingBytes.length !== 0) {
-      var error = 'not expecting remaining bytes after processing full frame packet'
-      errorLog(error)
-      throw new Error(error)
-    }
-    // store remaining bytes
-    this._availableBytes = channelDataDecoding.remainingBytes
-    // dispatch packet content
-    var dataBytes = channelDataDecoding.packet.bytes
-    this.emit('relayed-message', dataBytes, rinfo, channelDataDecoding.packet.channel)
-  } else {
-    TurnClient.super_.prototype.onOtherIncomingMessage.call(this, bytes, rinfo, isFrame)
-  }
+// Dispatch ChannelData packet
+TurnClient.prototype.dispatchChannelDataPacket = function (packet, rinfo) {
+  this.emit('relayed-message', packet.bytes, rinfo, packet.channel)
 }
 
 /** Message composition */
