@@ -39,10 +39,8 @@ var argv = require('yargs')
     clientAlice = turn(argv.addr, argv.port, argv.user, argv.pwd)
     clientBob = turn(argv.addr, argv.port, argv.user, argv.pwd)
   } else {
-    var transportAlice = new transports.TCP()
-    clientAlice = turn(argv.addr, argv.port, argv.user, argv.pwd, transportAlice)
-    var transportBob = new transports.TCP()
-    clientBob = turn(argv.addr, argv.port, argv.user, argv.pwd, transportBob)
+    clientAlice = turn(argv.addr, argv.port, argv.user, argv.pwd, new transports.TCP())
+    clientBob = turn(argv.addr, argv.port, argv.user, argv.pwd, new transports.TCP())
   }
   var srflxAddressAlice, srflxAddressBob, relayAddressAlice, relayAddressBob
   var channelAlice, channelBob
@@ -51,7 +49,7 @@ var argv = require('yargs')
   var dataMessageType = 0x01
   var endMessageType = 0x10
 
-  var writeStream
+  var readStream, writeStream
 
   // incoming messages
   clientBob.on('relayed-message', function (bytes, peerAddress) {
@@ -68,13 +66,16 @@ var argv = require('yargs')
         break
       case endMessageType:
         writeStream.end()
-        process.exit(0)
+        clientBob.closeP()
+          .then(function () {
+            console.log("bob's client is closed")
+            process.exit(0)
+          })
         break
       default:
         console.error("Add dazed and confused, don't know how to process message type " + type)
     }
   })
-
 
   // allocate session alice
   clientAlice.allocateP()
@@ -123,9 +124,10 @@ var argv = require('yargs')
     .then(function () {
       // if tcp -> max length channel data buffer is 65535, and we need one type byte
       // if udp -> EMSGSIZE error when buffer > 9212
-      var bufferSize = argv.transport === 'tcp' ? 65534 : 9211
+      var bufferSize = 519
+      //var bufferSize = argv.transport === 'tcp' ? 65534 : 9211
       // create file readstream and send chunks
-      var readStream = fs.createReadStream(argv.file, { highWaterMark: bufferSize })
+      readStream = fs.createReadStream(argv.file, { highWaterMark: bufferSize })
       readStream.on('data', function (chunk) {
         var typeByte = new Buffer(1)
         typeByte.writeUInt8(dataMessageType)
@@ -135,7 +137,7 @@ var argv = require('yargs')
           bytes,
           channelBob,
           function () { // on success
-            console.log('alice sent chunk of ' + chunk.length + ' bytes to bob')
+            console.log('alice sent chunk of ' + bytes.length + ' bytes to bob')
             readStream.resume()
           },
           function (error) { // on failure
@@ -147,15 +149,16 @@ var argv = require('yargs')
         // send end message
         var typeByte = new Buffer(1)
         typeByte.writeUInt8(endMessageType)
-        clientAlice.sendToChannel(
-          typeByte,
-          channelBob,
-          function () { // on success
+        clientAlice.sendToChannelP(typeByte, channelBob)
+          .then(function () {
             console.log('alice sent end message to bob')
-          },
-          function (error) { // on failure
+            return clientAlice.closeP()
+          })
+          .then(function () {
+            console.log("alice's client is closed")
+          })
+          .catch(function (error) {
             console.error(error)
-          }
-        )
+          })
       })
     })
