@@ -3,8 +3,8 @@
 var padding = require('stun-js').padding
 
 var debug = require('debug')
-var debugLog = debug('turn-js')
-var errorLog = debug('turn-js:error')
+var debugLog = debug('turn-js:channel_data')
+var errorLog = debug('turn-js:channel_data:error')
 
 // channel-data class
 var ChannelData = function (channel, bytes) {
@@ -21,7 +21,7 @@ var ChannelData = function (channel, bytes) {
   this.channel = channel
   this.bytes = bytes
 
-  debugLog('channel-data attrs: channel = ' + this.channel)
+  debugLog('channel-data attrs: channel = ' + this.channel + ', length = ' + bytes.length + ' bytes')
 }
 
 // packet header length
