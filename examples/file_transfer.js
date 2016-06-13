@@ -25,23 +25,18 @@ var argv = require('yargs')
   .alias('w', 'pwd')
   .nargs('w', 1)
   .describe('w', 'TURN server user password')
-  .alias('t', 'transport')
-  .choices('t', ['tcp', 'udp'])
-  .default('t', 'udp')
-  .nargs('t', 1)
-  .describe('t', 'Transport protocol')
+  .boolean('l')
+  .describe('l', 'verbose logging')
+  .alias('l', 'log')
   .help('h')
   .alias('h', 'help')
   .argv
 
-  var clientAlice, clientBob
-  if (argv.transport === 'udp') {
-    clientAlice = turn(argv.addr, argv.port, argv.user, argv.pwd)
-    clientBob = turn(argv.addr, argv.port, argv.user, argv.pwd)
-  } else {
-    clientAlice = turn(argv.addr, argv.port, argv.user, argv.pwd, new transports.TCP())
-    clientBob = turn(argv.addr, argv.port, argv.user, argv.pwd, new transports.TCP())
-  }
+  var clientAlice = turn(argv.addr, argv.port, argv.user, argv.pwd, new transports.TCP())
+  var clientBob = turn(argv.addr, argv.port, argv.user, argv.pwd, new transports.TCP())
+  var clientAliceClosed = false
+  var clientBobClosed = false
+
   var srflxAddressAlice, srflxAddressBob, relayAddressAlice, relayAddressBob
   var channelAlice, channelBob
 
@@ -51,17 +46,32 @@ var argv = require('yargs')
 
   var readStream, writeStream
 
+  var chunkNb = 0
+  var expSeqNb = 0
+
   // incoming messages
   clientBob.on('relayed-message', function (bytes, peerAddress) {
-    console.log('bob received ' + bytes.length + ' byte(s) from alice')
+    if (argv.log) {
+      console.log('bob received ' + bytes.length + ' byte(s) from alice')
+    }
     var type = bytes.slice(0, 1).readUInt8()
-    var data = bytes.slice(1, bytes.length)
     switch(type) {
       case startMessageType:
-        var filename = 'copy.' + data.toString()
+        var filenameBytes = bytes.slice(1, bytes.length)
+        var filename = 'copy.' + filenameBytes.toString()
         writeStream = fs.createWriteStream(filename)
         break
       case dataMessageType:
+        var seqNbBytes = bytes.slice(1, 3)
+        var seqNb = seqNbBytes.readUInt16BE()
+        if (seqNb === expSeqNb) {
+          expSeqNb++
+        } else {
+          console.error('Woops, expected chunk ' + expSeqNb + ', instead I received ' + seqNb)
+          expSeqNb = seqNb + 1
+          process.exit(0)
+        }
+        var data = bytes.slice(3, bytes.length)
         writeStream.write(data, 'binary')
         break
       case endMessageType:
@@ -69,7 +79,10 @@ var argv = require('yargs')
         clientBob.closeP()
           .then(function () {
             console.log("bob's client is closed")
-            process.exit(0)
+            clientBobClosed = true
+            if (clientAliceClosed && clientBobClosed) {
+              process.exit(0)
+            }
           })
         break
       default:
@@ -114,7 +127,9 @@ var argv = require('yargs')
       console.log("bob's channel to alice = " + channelAlice)
       // send filename from alice to bob
       var filename = path.basename(argv.file)
-      console.log('alice sends filename ' + filename + ' to bob')
+      if (argv.log) {
+        console.log('alice sends filename ' + filename + ' to bob')
+      }
       var typeByte = new Buffer(1)
       typeByte.writeUInt8(startMessageType)
       var filenameBytes = new Buffer(filename)
@@ -122,22 +137,24 @@ var argv = require('yargs')
       return clientAlice.sendToChannelP(bytes, channelBob)
     })
     .then(function () {
-      // if tcp -> max length channel data buffer is 65535, and we need one type byte
-      // if udp -> EMSGSIZE error when buffer > 9212
-      var bufferSize = 519
-      //var bufferSize = argv.transport === 'tcp' ? 65534 : 9211
+      var bufferSize = 16384 - 1 - 2 - 4 // buffer size - type byte - seqnb bytes - channeldata header
       // create file readstream and send chunks
       readStream = fs.createReadStream(argv.file, { highWaterMark: bufferSize })
       readStream.on('data', function (chunk) {
         var typeByte = new Buffer(1)
         typeByte.writeUInt8(dataMessageType)
-        var bytes = Buffer.concat([typeByte, chunk])
+        var seqNbBytes = new Buffer(2)
+        seqNbBytes.writeUInt16BE(chunkNb)
+        var bytes = Buffer.concat([typeByte, seqNbBytes, chunk])
         readStream.pause()
         clientAlice.sendToChannel(
           bytes,
           channelBob,
           function () { // on success
-            console.log('alice sent chunk of ' + bytes.length + ' bytes to bob')
+            if (argv.log) {
+              console.log('alice sent chunk of ' + bytes.length + ' bytes to bob')
+            }
+            chunkNb++
             readStream.resume()
           },
           function (error) { // on failure
@@ -151,11 +168,17 @@ var argv = require('yargs')
         typeByte.writeUInt8(endMessageType)
         clientAlice.sendToChannelP(typeByte, channelBob)
           .then(function () {
-            console.log('alice sent end message to bob')
+            if (argv.log) {
+              console.log('alice sent end message to bob')
+            }
             return clientAlice.closeP()
           })
           .then(function () {
             console.log("alice's client is closed")
+            clientAliceClosed = true
+            if (clientAliceClosed && clientBobClosed) {
+              process.exit(0)
+            }
           })
           .catch(function (error) {
             console.error(error)
