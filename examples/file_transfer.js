@@ -67,10 +67,11 @@ var argv = require('yargs')
         if (seqNb === expSeqNb) {
           expSeqNb++
         } else {
-          console.error('Woops, expected chunk ' + expSeqNb + ', instead I received ' + seqNb)
+          console.error('Woops, expected chunk ' + expSeqNb + ', instead received ' + seqNb)
           expSeqNb = seqNb + 1
           process.exit(0)
         }
+        readStream.resume()
         var data = bytes.slice(3, bytes.length)
         writeStream.write(data, 'binary')
         break
@@ -155,7 +156,7 @@ var argv = require('yargs')
               console.log('alice sent chunk of ' + bytes.length + ' bytes to bob')
             }
             chunkNb++
-            readStream.resume()
+            // readStream.resume()
           },
           function (error) { // on failure
             console.error(error)
