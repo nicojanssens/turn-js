@@ -10,30 +10,10 @@ var expect = chai.expect
 chai.use(chaiAsPromised)
 chai.should()
 
-var argv = require('yargs')
-  .usage('Usage: $0 [params]')
-  .demand('a')
-  .alias('a', 'addr')
-  .nargs('a', 1)
-  .describe('a', 'TURN server address')
-  .demand('p')
-  .alias('p', 'port')
-  .nargs('p', 1)
-  .describe('p', 'TURN server port')
-  .alias('u', 'user')
-  .nargs('u', 1)
-  .describe('u', 'TURN server user account')
-  .alias('w', 'pwd')
-  .nargs('w', 1)
-  .describe('w', 'TURN server user password')
-  .help('h')
-  .alias('h', 'help')
-  .argv
-
-var turnAddr = argv.addr
-var turnPort = argv.port
-var turnUser = argv.user
-var turnPwd = argv.pwd
+var turnAddr = process.env.TURN_ADDR
+var turnPort = process.env.TURN_PORT
+var turnUser = process.env.TURN_USER
+var turnPwd = process.env.TURN_PASS
 var socketPort = 12345
 
 describe('#TURN operations', function () {
