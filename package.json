@@ -26,13 +26,15 @@
     "chai": "^3.5.0",
     "chai-as-promised": "^5.2.0",
     "mocha": "^2.4.5",
+    "publish": "^0.6.0",
     "yargs": "^3.32.0"
   },
   "repository": {
     "type": "git",
-    "url": "git://github.com/nicojanssens/turn-js.git"
+    "url": "git://github.com/microminion/turn-js.git"
   },
   "scripts": {
+    "2npm": "publish",
     "test": "./node_modules/.bin/mocha test/*.unit.js"
   }
 }
