@@ -37,7 +37,7 @@ describe('#TURN operations', function () {
           expect(result).to.have.property('relayedAddress')
           expect(result.relayedAddress).to.have.property('address')
           expect(result.relayedAddress).to.have.property('port')
-          //expect(result.relayedAddress.address).to.equal(turnAddr)
+          // expect(result.relayedAddress.address).to.equal(turnAddr)
           return client.closeP()
         })
         .then(function () {
@@ -90,7 +90,7 @@ describe('#TURN operations', function () {
       expect(result).to.have.property('relayedAddress')
       expect(result.relayedAddress).to.have.property('address')
       expect(result.relayedAddress).to.have.property('port')
-      //expect(result.relayedAddress.address).to.equal(turnAddr)
+      // expect(result.relayedAddress.address).to.equal(turnAddr)
       client.close(
         function () {
           done()
@@ -118,7 +118,7 @@ describe('#TURN operations', function () {
           expect(result).to.have.property('relayedAddress')
           expect(result.relayedAddress).to.have.property('address')
           expect(result.relayedAddress).to.have.property('port')
-          //expect(result.relayedAddress.address).to.equal(turnAddr)
+          // expect(result.relayedAddress.address).to.equal(turnAddr)
           return client.closeP()
         })
         .then(function () {
@@ -365,7 +365,7 @@ describe('#TURN operations', function () {
         sendTestMessageFromAliceToBob()
       })
       .catch(function (error) {
-        done (error)
+        done(error)
       })
   })
 })
