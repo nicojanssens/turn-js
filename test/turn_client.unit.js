@@ -25,7 +25,6 @@ describe('#TURN operations', function () {
     var sendAllocateRequest = function (client, socket) {
       client.allocateP()
         .then(function (result) {
-          console.log(result)
           // end retransmissionTimer
           clearTimeout(retransmissionTimer)
           // test results
