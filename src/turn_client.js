@@ -242,6 +242,11 @@ TurnClient.prototype.bindChannel = function (address, port, channel, onSuccess, 
 
 // Execute refresh
 TurnClient.prototype.refreshP = function (lifetime) {
+  if (lifetime === undefined) {
+    var undefinedLifetimeError = 'lifetime is undefined'
+    errorLog(undefinedLifetimeError)
+    throw new Error(undefinedLifetimeError)
+  }
   var self = this
   // send refresh request
   var args = {}
@@ -249,9 +254,7 @@ TurnClient.prototype.refreshP = function (lifetime) {
   args.realm = this.realm
   args.user = this.username
   args.pwd = this.password
-  if (lifetime !== undefined) {
-    args.lifetime = lifetime
-  }
+  args.lifetime = lifetime
   return this.sendRefreshP(args)
     .then(function (refreshReply) {
       var errorCode = refreshReply.getAttribute(Attributes.ERROR_CODE)
@@ -292,10 +295,15 @@ TurnClient.prototype.refreshP = function (lifetime) {
 }
 
 TurnClient.prototype.refresh = function (lifetime, onSuccess, onFailure) {
+  if (lifetime === undefined) {
+    var undefinedLifetimeError = 'lifetime is undefined'
+    errorLog(undefinedLifetimeError)
+    throw new Error(undefinedLifetimeError)
+  }
   if (onSuccess === undefined || onFailure === undefined) {
-    var error = 'refresh callback handlers are undefined'
-    errorLog(error)
-    throw new Error(error)
+    var undefinedCbError = 'refresh callback handlers are undefined'
+    errorLog(undefinedCbError)
+    throw new Error(undefinedCbError)
   }
   this.refreshP(lifetime)
     .then(function (duration) {
