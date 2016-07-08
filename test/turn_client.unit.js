@@ -25,7 +25,6 @@ describe('#TURN operations', function () {
     var sendAllocateRequest = function (client, socket) {
       client.allocateP()
         .then(function (result) {
-          console.log(result)
           // end retransmissionTimer
           clearTimeout(retransmissionTimer)
           // test results
@@ -175,8 +174,7 @@ describe('#TURN operations', function () {
     })
     socket.on('listening', function () {
       // create stun client and pass socket over
-      var transport = new transports.UDP(socket)
-      var client = new TurnClient(turnAddr, turnPort, turnUser, turnPwd, transport)
+      var client = new TurnClient(turnAddr, turnPort, turnUser, turnPwd)
       // retransmission timer -- we're using UDP ...
       retransmissionTimer = setTimeout(function () {
         console.log('resending ALLOCATE and REFRESH request')
