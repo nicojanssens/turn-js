@@ -25,6 +25,7 @@ describe('#TURN operations', function () {
     var sendAllocateRequest = function (client, socket) {
       client.allocateP()
         .then(function (result) {
+          console.log(result)
           // end retransmissionTimer
           clearTimeout(retransmissionTimer)
           // test results
@@ -138,7 +139,7 @@ describe('#TURN operations', function () {
     sendAllocateRequest(client)
   })
 
-  it('should execute TURN allocate followed by refresh over UDP socket using promises', function () {
+  it('should execute TURN allocate followed by refresh over UDP socket using promises', function (done) {
     var lifetime = 600
     var retransmissionTimer
     // send a TURN allocate request and verify the reply
