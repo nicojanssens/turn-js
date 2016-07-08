@@ -33,7 +33,7 @@ var pjson = require('../package.json')
 var defaultSoftwareTag = pjson.name + ' v' + pjson.version
 TurnClient.DEFAULTS = {
   software: defaultSoftwareTag,
-  lifetime: 3600,
+  lifetime: 300,
   dontFragment: false
 }
 
@@ -96,10 +96,17 @@ TurnClient.prototype.allocateP = function () {
         address: relayedAddressAttr.address,
         port: relayedAddressAttr.port
       }
+      // retrieve lifetime attr, if present
+      var lifetimeAttr = allocateReply.getAttribute(Attributes.LIFETIME)
+      var lifetime
+      if (lifetimeAttr) {
+        lifetime = lifetimeAttr.duration
+      }
       // create and return result
       var result = {
         mappedAddress: self.mappedAddress,
-        relayedAddress: self.relayedAddress
+        relayedAddress: self.relayedAddress,
+        lifetime: lifetime
       }
       return Q.fcall(function () {
         return result
@@ -501,10 +508,12 @@ function composeAllocateRequest (args) {
   var attrs = new Attributes()
   _addSecurityAttributes(attrs, margs)
   attrs.add(new Attributes.Software(margs.software))
-  attrs.add(new Attributes.Lifetime(margs.lifetime))
   attrs.add(new Attributes.RequestedTransport())
-  if (margs.dontFragment) {
+  if (margs.dontFragment !== undefined) {
     attrs.add(new Attributes.DontFragment())
+  }
+  if (margs.lifetime !== undefined) {
+    attrs.add(new Attributes.Lifetime(margs.lifetime))
   }
   // create allocate packet
   var packet = new Packet(Packet.METHOD.ALLOCATE, Packet.TYPE.REQUEST, attrs)
@@ -640,7 +649,9 @@ function composeRefreshRequest (args) {
   var attrs = new Attributes()
   _addSecurityAttributes(attrs, margs)
   attrs.add(new Attributes.Software(margs.software))
-  attrs.add(new Attributes.Lifetime(margs.lifetime))
+  if (margs.lifetime !== undefined) {
+    attrs.add(new Attributes.Lifetime(margs.lifetime))
+  }
   // create refresh packet
   var packet = new Packet(Packet.METHOD.REFRESH, Packet.TYPE.REQUEST, attrs)
   // encode packet
