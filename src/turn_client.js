@@ -31,11 +31,17 @@ inherits(TurnClient, StunClient)
 
 var pjson = require('../package.json')
 var defaultSoftwareTag = pjson.name + ' v' + pjson.version
+
+TurnClient.channelBindingLifetime = 600
+TurnClient.defaultAllocationLifetime = 600
+TurnClient.permissionLifetime = 300
+
 TurnClient.DEFAULTS = {
   software: defaultSoftwareTag,
-  lifetime: 300,
+  lifetime: TurnClient.defaultAllocationLifetime,
   dontFragment: false
 }
+
 
 /** TurnClient opertions */
 
@@ -98,16 +104,15 @@ TurnClient.prototype.allocateP = function () {
       }
       // retrieve lifetime attr, if present
       var lifetimeAttr = allocateReply.getAttribute(Attributes.LIFETIME)
-      var lifetime
-      if (lifetimeAttr) {
-        lifetime = lifetimeAttr.duration
-      }
       // create and return result
       var result = {
         mappedAddress: self.mappedAddress,
         relayedAddress: self.relayedAddress,
-        lifetime: lifetime
       }
+      if (lifetimeAttr) {
+        result.lifetime = lifetimeAttr.duration
+      }
+
       return Q.fcall(function () {
         return result
       })
@@ -130,7 +135,7 @@ TurnClient.prototype.allocate = function (onSuccess, onFailure) {
 }
 
 // Create permission to send data to a peer address
-TurnClient.prototype.createPermissionP = function (address, lifetime) {
+TurnClient.prototype.createPermissionP = function (address) {
   if (address === undefined) {
     var error = 'create permission requires specified peer address'
     errorLog(error)
@@ -143,9 +148,6 @@ TurnClient.prototype.createPermissionP = function (address, lifetime) {
   args.user = this.username
   args.pwd = this.password
   args.address = address
-  if (lifetime !== undefined) {
-    args.lifetime = lifetime
-  }
   return this.sendCreatePermissionP(args)
     .then(function (createPermissionReply) {
       var errorCode = createPermissionReply.getAttribute(Attributes.ERROR_CODE)
@@ -157,7 +159,7 @@ TurnClient.prototype.createPermissionP = function (address, lifetime) {
     })
 }
 
-TurnClient.prototype.createPermission = function (address, lifetime, onSuccess, onFailure) {
+TurnClient.prototype.createPermission = function (address, onSuccess, onFailure) {
   if (onSuccess === undefined || onFailure === undefined) {
     var undefinedCbError = 'create permission callback handlers are undefined'
     errorLog(undefinedCbError)
@@ -168,7 +170,7 @@ TurnClient.prototype.createPermission = function (address, lifetime, onSuccess, 
     errorLog(undefinedAddressError)
     throw new Error(undefinedAddressError)
   }
-  this.createPermissionP(address, lifetime)
+  this.createPermissionP(address)
     .then(function () {
       onSuccess()
     })
@@ -178,7 +180,7 @@ TurnClient.prototype.createPermission = function (address, lifetime, onSuccess, 
 }
 
 // Create channel
-TurnClient.prototype.bindChannelP = function (address, port, channel, lifetime) {
+TurnClient.prototype.bindChannelP = function (address, port, channel) {
   if (address === undefined || port === undefined) {
     var undefinedAddressError = 'channel bind requires specified peer address and port'
     errorLog(undefinedAddressError)
@@ -205,9 +207,6 @@ TurnClient.prototype.bindChannelP = function (address, port, channel, lifetime) 
   args.address = address
   args.channel = channel
   args.port = port
-  if (lifetime !== undefined) {
-    args.lifetime = lifetime
-  }
   return this.sendChannelBindP(args)
     .then(function (channelBindReply) {
       var errorCode = channelBindReply.getAttribute(Attributes.ERROR_CODE)
@@ -221,7 +220,7 @@ TurnClient.prototype.bindChannelP = function (address, port, channel, lifetime) 
     })
 }
 
-TurnClient.prototype.bindChannel = function (address, port, channel, lifetime, onSuccess, onFailure) {
+TurnClient.prototype.bindChannel = function (address, port, channel, onSuccess, onFailure) {
   if (onSuccess === undefined || onFailure === undefined) {
     var undefinedCbError = 'bind callback handlers are undefined'
     errorLog(undefinedCbError)
@@ -232,7 +231,7 @@ TurnClient.prototype.bindChannel = function (address, port, channel, lifetime, o
     errorLog(undefinedAddressError)
     throw new Error(undefinedAddressError)
   }
-  this.bindChannelP(address, port, channel, lifetime)
+  this.bindChannelP(address, port, channel)
     .then(function (duration) {
       onSuccess(duration)
     })
@@ -609,9 +608,6 @@ function composeChannelBindRequest (args) {
   _addSecurityAttributes(attrs, args)
   attrs.add(new Attributes.ChannelNumber(args.channel))
   attrs.add(new Attributes.XORPeerAddress(args.address, args.port))
-  if (args.lifetime !== undefined) {
-    attrs.add(new Attributes.Lifetime(args.lifetime))
-  }
   // create channelBind packet
   var packet = new Packet(Packet.METHOD.CHANNELBIND, Packet.TYPE.REQUEST, attrs)
   // create channelBind packet
@@ -649,9 +645,7 @@ function composeRefreshRequest (args) {
   var attrs = new Attributes()
   _addSecurityAttributes(attrs, margs)
   attrs.add(new Attributes.Software(margs.software))
-  if (margs.lifetime !== undefined) {
-    attrs.add(new Attributes.Lifetime(margs.lifetime))
-  }
+  attrs.add(new Attributes.Lifetime(margs.lifetime))
   // create refresh packet
   var packet = new Packet(Packet.METHOD.REFRESH, Packet.TYPE.REQUEST, attrs)
   // encode packet

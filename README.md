@@ -29,13 +29,13 @@ npm install turn-js
 
 ### `myClient.allocateP()`
 
-### `myClient.createPermission(address, lifetime, function() {}, function(error) {})`
+### `myClient.createPermission(address, function() {}, function(error) {})`
 
-### `myClient.createPermission(address, lifetime)`
+### `myClient.createPermission(address)`
 
 ### `myClient.bindChannel(address, port, channel, lifetime, function() {}, function(error) {})`
 
-### `myClient.bindChannelP(address, port, channel, lifetime)`
+### `myClient.bindChannelP(address, port, channel)`
 
 ### `myClient.refresh(lifetime, function() {}, function(error) {})`
 

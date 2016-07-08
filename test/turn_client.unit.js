@@ -139,7 +139,7 @@ describe('#TURN operations', function () {
   })
 
   it('should execute TURN allocate followed by refresh over UDP socket using promises', function (done) {
-    var lifetime = 600
+    var lifetime = 3600
     var retransmissionTimer
     // send a TURN allocate request and verify the reply
     var sendAllocateAndRefreshRequest = function (client) {
@@ -189,10 +189,9 @@ describe('#TURN operations', function () {
     var transport = new transports.TCP()
     var client = new TurnClient(turnAddr, turnPort, turnUser, turnPwd, transport)
     var turnAddress = '1.2.3.4'
-    var lifetime = 600
     return client.allocateP()
       .then(function (result) {
-        return client.createPermissionP(turnAddress, lifetime)
+        return client.createPermissionP(turnAddress)
       })
       .then(function () {
         return client.closeP()
