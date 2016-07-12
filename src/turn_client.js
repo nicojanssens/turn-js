@@ -34,7 +34,7 @@ var defaultSoftwareTag = pjson.name + ' v' + pjson.version
 
 TurnClient.channelBindingLifetime = 600
 TurnClient.defaultAllocationLifetime = 600
-TurnClient.permissionLifetime = 300
+TurnClient.createPermissionLifetime = 300
 
 TurnClient.DEFAULTS = {
   software: defaultSoftwareTag,
