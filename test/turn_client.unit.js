@@ -366,6 +366,11 @@ describe('#TURN operations', function () {
       .then(function (channel) {
         expect(channel).not.to.be.undefined
         channelId = channel
+        // mimic refreshing of channel binding
+        return clientAlice.bindChannelP(relayAddressBob.address, relayAddressBob.port, channel)
+      })
+      .then(function (channel) {
+        expect(channel).to.equal(channelId)
         //  create permission for bob to send messages to alice
         return clientAlice.createPermissionP(relayAddressBob.address)
       })
