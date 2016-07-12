@@ -198,6 +198,22 @@ describe('#TURN operations', function () {
       })
   })
 
+  it('should execute TURN allocate followed by two consecutive create permissions (testing permission refresh) over TCP socket using promises', function () {
+    var transport = new transports.TCP()
+    var client = new TurnClient(turnAddr, turnPort, turnUser, turnPwd, transport)
+    var turnAddress = '1.2.3.4'
+    return client.allocateP()
+      .then(function (result) {
+        return client.createPermissionP(turnAddress)
+      })
+      .then(function () {
+        return client.createPermissionP(turnAddress)
+      })
+      .then(function () {
+        return client.closeP()
+      })
+  })
+
   it('should receive messages that are sent via relay server over TCP sockets', function (done) {
     var testData = 'hello there'
     var testRuns = 10
