@@ -32,13 +32,12 @@ inherits(TurnClient, StunClient)
 var pjson = require('../package.json')
 var defaultSoftwareTag = pjson.name + ' v' + pjson.version
 
-TurnClient.channelBindingLifetime = 600
-TurnClient.defaultAllocationLifetime = 600
-TurnClient.createPermissionLifetime = 300
-
+TurnClient.CHANNEL_BINDING_LIFETIME = 600
+TurnClient.DEFAULT_ALLOCATION_LIFETIME = 600
+TurnClient.CREATE_PERMISSION_LIFETIME = 300
 TurnClient.DEFAULTS = {
   software: defaultSoftwareTag,
-  lifetime: TurnClient.defaultAllocationLifetime,
+  lifetime: TurnClient.DEFAULT_ALLOCATION_LIFETIME,
   dontFragment: false
 }
 
