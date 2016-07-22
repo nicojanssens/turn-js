@@ -16,6 +16,9 @@ var turnUser = process.env.TURN_USER
 var turnPwd = process.env.TURN_PASS
 var socketPort = 33333
 
+var winston = require('winston')
+winston.level = 'debug'
+
 describe('#TURN operations', function () {
   this.timeout(15000)
 

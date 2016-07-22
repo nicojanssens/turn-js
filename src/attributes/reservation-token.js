@@ -1,18 +1,25 @@
 'use strict'
 
-var debug = require('debug')
-var debugLog = debug('turn-js:attributes')
-var errorLog = debug('turn-js:attributes:error')
+var winston = require('winston')
+var winstonWrapper = require('winston-meta-wrapper')
 
 var ReservationTokenAttr = function (token) {
+  // logging
+  this._log = winstonWrapper(winston)
+  this._log.addMeta({
+    module: 'turn:attributes'
+  })
+  // verify token
   if (token === undefined || Buffer.byteLength(token) !== 8) {
-    var error = 'invalid reservation token attribute'
-    errorLog(error)
+    var errorMsg = 'invalid reservation token attribute'
+    this._log.error(errorMsg)
     throw new Error('error')
   }
+  // init
   this.token = token
   this.type = 0x0022
-  debugLog('reservation token attr: ' + this.token)
+  // done
+  this._log.debug('reservation token attr: ' + this.token)
 }
 
 ReservationTokenAttr.prototype.encode = function () {

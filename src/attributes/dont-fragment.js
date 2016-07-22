@@ -1,11 +1,18 @@
 'use strict'
 
-var debug = require('debug')
-var debugLog = debug('turn-js:attributes')
+var winston = require('winston')
+var winstonWrapper = require('winston-meta-wrapper')
 
 var DontFragmentAttr = function () {
+  // logging
+  this._log = winstonWrapper(winston)
+  this._log.addMeta({
+    module: 'turn:attributes'
+  })
+  // init
   this.type = 0x001A
-  debugLog("don't fragment attr")
+  // done
+  this._log.debug("don't fragment attr")
 }
 
 DontFragmentAttr.prototype.encode = function () {

@@ -1,24 +1,30 @@
 'use strict'
 
-var debug = require('debug')
-var debugLog = debug('turn-js:attributes')
-var errorLog = debug('turn-js:attributes:error')
+var winston = require('winston')
+var winstonWrapper = require('winston-meta-wrapper')
 
 var ChannelNumberAttr = function (channel) {
+  // logging
+  this._log = winstonWrapper(winston)
+  this._log.addMeta({
+    module: 'turn:attributes'
+  })
+  // verifying channel
   if (typeof channel === 'undefined') {
     var channelUndefinedError = 'channel-number attribute undefined'
-    errorLog(channelUndefinedError)
+    this._log.error(channelUndefinedError)
     throw new Error(channelUndefinedError)
   }
   if (Number(channel) === 'NaN') {
     var channelNaNError = 'invalid channel-number attribute'
-    errorLog(channelNaNError)
+    this._log.error(channelNaNError)
     throw new Error(channelNaNError)
   }
+  // init
   this.channel = channel
   this.type = 0x000C
-
-  debugLog('channel-number = ' + this.channel)
+  // done
+  this._log.debug('channel-number = ' + this.channel)
 }
 
 ChannelNumberAttr.prototype.encode = function () {

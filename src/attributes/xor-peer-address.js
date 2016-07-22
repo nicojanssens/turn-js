@@ -1,29 +1,34 @@
 'use strict'
 
 var addressAttr = require('stun-js').address
-
-var debug = require('debug')
-var debugLog = debug('turn-js:attributes')
-var errorLog = debug('turn-js:attributes:error')
+var winston = require('winston')
+var winstonWrapper = require('winston-meta-wrapper')
 
 var XORPeerAddressAttr = function (address, port) {
+  // logging
+  this._log = winstonWrapper(winston)
+  this._log.addMeta({
+    module: 'turn:attributes'
+  })
+  // verify address
   if (address === undefined) {
-    var error = 'invalid xor peer address attribute'
-    errorLog(error)
-    throw new Error(error)
+    var errorMsg = 'invalid xor peer address attribute'
+    this._log.error(errorMsg)
+    throw new Error(errorMsg)
   }
+  // init
   this.address = address
   this.port = port || 0
   this.type = 0x0012
-
-  debugLog('xor peer address attr: ' + this.address + ':' + this.port)
+  // done
+  this._log.debug('xor peer address attr: ' + this.address + ':' + this.port)
 }
 
 XORPeerAddressAttr.prototype.encode = function (magic, tid) {
   if (magic === undefined || tid === undefined) {
-    var error = 'invalid xorPeerAddressAttr.encode params'
-    errorLog(error)
-    throw new Error(error)
+    var errorMsg = 'invalid xorPeerAddressAttr.encode params'
+    this._log.error(errorMsg)
+    throw new Error(errorMsg)
   }
   // type
   var typeBytes = new Buffer(2)

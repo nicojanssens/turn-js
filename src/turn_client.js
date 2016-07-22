@@ -3,22 +3,30 @@
 var inherits = require('util').inherits
 var merge = require('merge')
 var Q = require('q')
+var winston = require('winston')
+var winstonWrapper = require('winston-meta-wrapper')
 
 var Attributes = require('./attributes')
 var ChannelData = require('./channel_data')
 var Packet = require('./packet')
 var StunClient = require('stun-js').StunClient
 
-var debug = require('debug')
-var debugLog = debug('turn-js')
-var errorLog = debug('turn-js:error')
+var _log = winstonWrapper(winston)
+_log.addMeta({
+  module: 'turn:client'
+})
 
 // Constructor
 var TurnClient = function (host, port, username, password, transport) {
+  // logging
+  this._log = winstonWrapper(winston)
+  this._log.addMeta({
+    module: 'turn:client'
+  })
+  // init
   StunClient.call(this, host, port, transport)
   this.username = username
   this.password = password
-
   // register channel_data decoder
   this._decoders.push({
     decoder: ChannelData.decode,
@@ -68,8 +76,8 @@ TurnClient.prototype.allocateP = function () {
           return self.sendAllocateP(args)
         } else {
           // throw an error if error code !== 401
-          errorLog('allocate error: ' + errorCode.reason)
-          errorLog('allocate response: ' + JSON.stringify(allocateReply))
+          self._log.error('allocate error: ' + errorCode.reason)
+          self._log.error('allocate response: ' + JSON.stringify(allocateReply))
           throw new Error('allocate error: ' + errorCode.reason)
         }
       } else {
@@ -120,9 +128,9 @@ TurnClient.prototype.allocateP = function () {
 
 TurnClient.prototype.allocate = function (onSuccess, onFailure) {
   if (onSuccess === undefined || onFailure === undefined) {
-    var error = 'allocate callback handlers are undefined'
-    errorLog(error)
-    throw new Error(error)
+    var errorMsg = 'allocate callback handlers are undefined'
+    this._log.error(errorMsg)
+    throw new Error(errorMsg)
   }
   this.allocateP()
     .then(function (result) {
@@ -136,9 +144,9 @@ TurnClient.prototype.allocate = function (onSuccess, onFailure) {
 // Create permission to send data to a peer address
 TurnClient.prototype.createPermissionP = function (address) {
   if (address === undefined) {
-    var error = 'create permission requires specified peer address'
-    errorLog(error)
-    throw new Error(error)
+    var errorMsg = 'create permission requires specified peer address'
+    this._log.error(errorMsg)
+    throw new Error(errorMsg)
   }
   // send a create permission request
   var args = {}
@@ -161,12 +169,12 @@ TurnClient.prototype.createPermissionP = function (address) {
 TurnClient.prototype.createPermission = function (address, onSuccess, onFailure) {
   if (onSuccess === undefined || onFailure === undefined) {
     var undefinedCbError = 'create permission callback handlers are undefined'
-    errorLog(undefinedCbError)
+    this._log.error(undefinedCbError)
     throw new Error(undefinedCbError)
   }
   if (address === undefined) {
     var undefinedAddressError = 'create permission requires specified peer address'
-    errorLog(undefinedAddressError)
+    this._log.error(undefinedAddressError)
     throw new Error(undefinedAddressError)
   }
   this.createPermissionP(address)
@@ -182,7 +190,7 @@ TurnClient.prototype.createPermission = function (address, onSuccess, onFailure)
 TurnClient.prototype.bindChannelP = function (address, port, channel) {
   if (address === undefined || port === undefined) {
     var undefinedAddressError = 'channel bind requires specified peer address and port'
-    errorLog(undefinedAddressError)
+    this._log.error(undefinedAddressError)
     throw new Error(undefinedAddressError)
   }
   // create channel id
@@ -191,7 +199,7 @@ TurnClient.prototype.bindChannelP = function (address, port, channel) {
   if (channel !== undefined) {
     if (channel < min || channel > max) {
       var incorrectChannelError = 'channel id must be >= 0x4000 and =< 0x7FFF'
-      errorLog(incorrectChannelError)
+      this._log.error(incorrectChannelError)
       throw new Error(incorrectChannelError)
     }
   } else {
@@ -222,12 +230,12 @@ TurnClient.prototype.bindChannelP = function (address, port, channel) {
 TurnClient.prototype.bindChannel = function (address, port, channel, onSuccess, onFailure) {
   if (onSuccess === undefined || onFailure === undefined) {
     var undefinedCbError = 'bind callback handlers are undefined'
-    errorLog(undefinedCbError)
+    this._log.error(undefinedCbError)
     throw new Error(undefinedCbError)
   }
   if (address === undefined || port === undefined) {
     var undefinedAddressError = 'channel bind requires specified peer address and port'
-    errorLog(undefinedAddressError)
+    this._log.error(undefinedAddressError)
     throw new Error(undefinedAddressError)
   }
   this.bindChannelP(address, port, channel)
@@ -243,7 +251,7 @@ TurnClient.prototype.bindChannel = function (address, port, channel, onSuccess, 
 TurnClient.prototype.refreshP = function (lifetime) {
   if (lifetime === undefined) {
     var undefinedLifetimeError = 'lifetime is undefined'
-    errorLog(undefinedLifetimeError)
+    this._log.error(undefinedLifetimeError)
     throw new Error(undefinedLifetimeError)
   }
   var self = this
@@ -296,12 +304,12 @@ TurnClient.prototype.refreshP = function (lifetime) {
 TurnClient.prototype.refresh = function (lifetime, onSuccess, onFailure) {
   if (lifetime === undefined) {
     var undefinedLifetimeError = 'lifetime is undefined'
-    errorLog(undefinedLifetimeError)
+    this._log.error(undefinedLifetimeError)
     throw new Error(undefinedLifetimeError)
   }
   if (onSuccess === undefined || onFailure === undefined) {
     var undefinedCbError = 'refresh callback handlers are undefined'
-    errorLog(undefinedCbError)
+    this._log.error(undefinedCbError)
     throw new Error(undefinedCbError)
   }
   this.refreshP(lifetime)
@@ -324,17 +332,18 @@ TurnClient.prototype.closeP = function () {
 
 TurnClient.prototype.close = function (onSuccess, onFailure) {
   if (onSuccess === undefined || onFailure === undefined) {
-    var error = 'close callback handlers are undefined'
-    errorLog(error)
-    throw new Error(error)
+    var errorMsg = 'close callback handlers are undefined'
+    this._log.error(errorMsg)
+    throw new Error(errorMsg)
   }
+  var self = this
   this.closeP()
     .then(function () {
       onSuccess()
     })
-    .catch(function (error) {
-      errorLog(error)
-      onFailure(error)
+    .catch(function (errorMsg) {
+      self._log.error(errorMsg)
+      onFailure(errorMsg)
     })
 }
 
@@ -342,17 +351,17 @@ TurnClient.prototype.close = function (onSuccess, onFailure) {
 
 // Send TURN allocation
 TurnClient.prototype.sendAllocateP = function (args) {
-  debugLog('send allocate (using promises)')
+  this._log.debug('send allocate (using promises)')
   var message = composeAllocateRequest(args)
   return this.sendStunRequestP(message)
 }
 
 TurnClient.prototype.sendAllocate = function (args, onSuccess, onFailure) {
-  debugLog('send allocate')
+  this._log.debug('send allocate')
   if (onSuccess === undefined || onFailure === undefined) {
-    var error = 'send allocate callback handlers are undefined'
-    errorLog(error)
-    throw new Error(error)
+    var errorMsg = 'send allocate callback handlers are undefined'
+    this._log.error(errorMsg)
+    throw new Error(errorMsg)
   }
   this.sendAllocateP(args)
     .then(function (reply) {
@@ -365,17 +374,17 @@ TurnClient.prototype.sendAllocate = function (args, onSuccess, onFailure) {
 
 // Send TURN create permission
 TurnClient.prototype.sendCreatePermissionP = function (args) {
-  debugLog('send create permission (using promises)')
+  this._log.debug('send create permission (using promises)')
   var message = composeCreatePermissionRequest(args)
   return this.sendStunRequestP(message)
 }
 
 TurnClient.prototype.sendCreatePermission = function (args, onSuccess, onFailure) {
-  debugLog('send create permission')
+  this._log.debug('send create permission')
   if (onSuccess === undefined || onFailure === undefined) {
-    var error = 'send create permission callback handlers are undefined'
-    errorLog(error)
-    throw new Error(error)
+    var errorMsg = 'send create permission callback handlers are undefined'
+    this._log.error(errorMsg)
+    throw new Error(errorMsg)
   }
   this.sendCreatePermissionP(args)
     .then(function (reply) {
@@ -388,17 +397,17 @@ TurnClient.prototype.sendCreatePermission = function (args, onSuccess, onFailure
 
 // Send TURN channel bind
 TurnClient.prototype.sendChannelBindP = function (args) {
-  debugLog('send channel bind (using promises)')
+  this._log.debug('send channel bind (using promises)')
   var message = composeChannelBindRequest(args)
   return this.sendStunRequestP(message)
 }
 
 TurnClient.prototype.sendChannelBind = function (args, onSuccess, onFailure) {
-  debugLog('send channel bind')
+  this._log.debug('send channel bind')
   if (onSuccess === undefined || onFailure === undefined) {
-    var error = 'send channel bind callback handlers are undefined'
-    errorLog(error)
-    throw new Error(error)
+    var errorMsg = 'send channel bind callback handlers are undefined'
+    this._log.error(errorMsg)
+    throw new Error(errorMsg)
   }
   this.sendChannelBindP(args)
     .then(function (reply) {
@@ -411,17 +420,17 @@ TurnClient.prototype.sendChannelBind = function (args, onSuccess, onFailure) {
 
 // Send TURN refresh
 TurnClient.prototype.sendRefreshP = function (args) {
-  debugLog('send refresh (using promises)')
+  this._log.debug('send refresh (using promises)')
   var message = composeRefreshRequest(args)
   return this.sendStunRequestP(message)
 }
 
 TurnClient.prototype.sendRefresh = function (args, onSuccess, onFailure) {
-  debugLog('send refresh')
+  this._log.debug('send refresh')
   if (onSuccess === undefined || onFailure === undefined) {
-    var error = 'send refresh callback handlers are undefined'
-    errorLog(error)
-    throw new Error(error)
+    var errorMsg = 'send refresh callback handlers are undefined'
+    this._log.error(errorMsg)
+    throw new Error(errorMsg)
   }
   this.sendRefreshP(args)
     .then(function (reply) {
@@ -444,11 +453,11 @@ TurnClient.prototype.sendToRelayP = function (bytes, address, port) {
 }
 
 TurnClient.prototype.sendToRelay = function (bytes, address, port, onSuccess, onFailure) {
-  debugLog('send data')
+  this._log.debug('send data')
   if (onSuccess === undefined || onFailure === undefined) {
-    var error = 'send data callback handlers are undefined'
-    errorLog(error)
-    throw new Error(error)
+    var errorMsg = 'send data callback handlers are undefined'
+    this._log.error(errorMsg)
+    throw new Error(errorMsg)
   }
   this.sendToRelayP(bytes, address, port)
     .then(function () {
@@ -470,11 +479,11 @@ TurnClient.prototype.sendToChannelP = function (bytes, channel) {
 }
 
 TurnClient.prototype.sendToChannel = function (bytes, channel, onSuccess, onFailure) {
-  debugLog('send channel data')
+  this._log.debug('send channel data')
   if (onSuccess === undefined || onFailure === undefined) {
-    var error = 'send channel data callback handlers are undefined'
-    errorLog(error)
-    throw new Error(error)
+    var errorMsg = 'send channel data callback handlers are undefined'
+    this._log.error(errorMsg)
+    throw new Error(errorMsg)
   }
   this.sendToChannelP(bytes, channel)
     .then(function () {
@@ -532,12 +541,12 @@ function composeCreatePermissionRequest (args) {
   // check args
   if (args === undefined) {
     var undefinedArgsError = 'invalid create-permission attributes: args = undefined'
-    errorLog(undefinedArgsError)
+    _log.error(undefinedArgsError)
     throw new Error(undefinedArgsError)
   }
   if (args.address === undefined) {
     var undefinedAddressError = 'invalid create-permission attributes: args.address = undefined'
-    errorLog(undefinedAddressError)
+    _log.error(undefinedAddressError)
     throw new Error(undefinedAddressError)
   }
   // create attrs
@@ -555,22 +564,22 @@ function composeSendIndication (args) {
   // check args
   if (args === undefined) {
     var undefinedArgsError = 'invalid send attributes: args = undefined'
-    errorLog(undefinedArgsError)
+    _log.error(undefinedArgsError)
     throw new Error(undefinedArgsError)
   }
   if (args.address === undefined) {
     var undefinedAddressError = 'invalid send attributes: args.address = undefined'
-    errorLog(undefinedAddressError)
+    _log.error(undefinedAddressError)
     throw new Error(undefinedAddressError)
   }
   if (args.port === undefined) {
     var undefinedPortError = 'invalid send attributes: args.port = undefined'
-    errorLog(undefinedPortError)
+    _log.error(undefinedPortError)
     throw new Error(undefinedPortError)
   }
   if (args.bytes === undefined) {
     var undefinedBytesError = 'invalid send attributes: args.bytes = undefined'
-    errorLog(undefinedBytesError)
+    _log.error(undefinedBytesError)
     throw new Error(undefinedBytesError)
   }
   var margs = merge(Object.create(TurnClient.DEFAULTS), args)
@@ -592,22 +601,22 @@ function composeChannelBindRequest (args) {
   // check args
   if (args === undefined) {
     var undefinedArgsError = 'invalid channel-bind attributes: args = undefined'
-    errorLog(undefinedArgsError)
+    _log.error(undefinedArgsError)
     throw new Error(undefinedArgsError)
   }
   if (args.channel === undefined) {
     var undefinedChannelError = 'invalid channel-bind attributes: args.channel = undefined'
-    errorLog(undefinedChannelError)
+    _log.error(undefinedChannelError)
     throw new Error(undefinedChannelError)
   }
   if (args.address === undefined) {
     var undefinedAddressError = 'invalid channel-bind attributes: args.address = undefined'
-    errorLog(undefinedAddressError)
+    _log.error(undefinedAddressError)
     throw new Error(undefinedAddressError)
   }
   if (args.port === undefined) {
     var undefinedPortError = 'invalid channel-bind attributes: args.port = undefined'
-    errorLog(undefinedPortError)
+    _log.error(undefinedPortError)
     throw new Error(undefinedPortError)
   }
   // create attrs
@@ -626,17 +635,17 @@ function composeChannelDataMessage (args) {
   // check args
   if (args === undefined) {
     var undefinedArgsError = 'invalid channel-bind attributes: args = undefined'
-    errorLog(undefinedArgsError)
+    _log.error(undefinedArgsError)
     throw new Error(undefinedArgsError)
   }
   if (args.bytes === undefined) {
     var undefinedDataError = 'invalid channel-data attribute: bytes = undefined'
-    errorLog(undefinedDataError)
+    _log.error(undefinedDataError)
     throw new Error(undefinedDataError)
   }
   if (args.channel === undefined) {
     var undefinedChannelError = 'invalid channel-data attribute: channel = undefined'
-    errorLog(undefinedChannelError)
+    _log.error(undefinedChannelError)
     throw new Error(undefinedChannelError)
   }
   // create channel-data packet

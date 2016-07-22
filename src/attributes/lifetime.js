@@ -1,19 +1,25 @@
 'use strict'
 
-var debug = require('debug')
-var debugLog = debug('turn-js:attributes')
-var errorLog = debug('turn-js:attributes:error')
+var winston = require('winston')
+var winstonWrapper = require('winston-meta-wrapper')
 
 var LifetimeAttr = function (duration) {
+  // logging
+  this._log = winstonWrapper(winston)
+  this._log.addMeta({
+    module: 'turn:attributes'
+  })
+  // verify duration
   if (typeof duration !== 'number') {
-    var error = 'invalid lifetime attribute'
-    errorLog(error)
-    throw new Error(error)
+    var errorMsg = 'invalid lifetime attribute'
+    this._log.error(errorMsg)
+    throw new Error(errorMsg)
   }
+  // init
   this.duration = duration
   this.type = 0x000D
-
-  debugLog('lifetime attr: ' + this.duration)
+  // done
+  this._log.debug('lifetime attr: ' + this.duration)
 }
 
 LifetimeAttr.prototype.encode = function () {

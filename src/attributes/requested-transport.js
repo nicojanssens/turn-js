@@ -1,12 +1,19 @@
 'use strict'
 
-var debug = require('debug')
-var debugLog = debug('turn-js:attributes')
+var winston = require('winston')
+var winstonWrapper = require('winston-meta-wrapper')
 
 var RequestedTransportAttr = function () {
+  // logging
+  this._log = winstonWrapper(winston)
+  this._log.addMeta({
+    module: 'turn:attributes'
+  })
+  // init
   this.value = 17 // UDP only
   this.type = 0x0019
-  debugLog('requested transport attr: ' + this.value)
+  // done
+  this._log.debug('requested transport attr: ' + this.value)
 }
 
 RequestedTransportAttr.prototype.encode = function () {

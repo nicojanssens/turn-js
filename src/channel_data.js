@@ -1,27 +1,37 @@
 'use strict'
 
 var padding = require('stun-js').padding
+var winston = require('winston')
+var winstonWrapper = require('winston-meta-wrapper')
 
-var debug = require('debug')
-var debugLog = debug('turn-js:channel_data')
-var errorLog = debug('turn-js:channel_data:error')
+var _log = winstonWrapper(winston)
+_log.addMeta({
+  module: 'turn:channel-data'
+})
 
 // channel-data class
 var ChannelData = function (channel, bytes) {
+  // logging
+  this._log = winstonWrapper(winston)
+  this._log.addMeta({
+    module: 'turn:channel-data'
+  })
+  // verify channel and bytes
   if (bytes === undefined) {
     var undefinedBytesError = 'invalid channel-data attribute: bytes = undefined'
-    errorLog(undefinedBytesError)
+    this._log.error(undefinedBytesError)
     throw new Error(undefinedBytesError)
   }
   if (channel === undefined) {
     var undefinedChannelError = 'invalid channel-data attribute: channel = undefined'
-    errorLog(undefinedChannelError)
+    this._log.error(undefinedChannelError)
     throw new Error(undefinedChannelError)
   }
+  // init
   this.channel = channel
   this.bytes = bytes
-
-  debugLog('channel-data attrs: channel = ' + this.channel + ', length = ' + bytes.length + ' bytes')
+  // done
+  this._log.debug('channel-data attrs: channel = ' + this.channel + ', length = ' + bytes.length + ' bytes')
 }
 
 // packet header length
@@ -47,12 +57,12 @@ ChannelData.prototype.encode = function () {
 ChannelData.decode = function (bytes, isFrame) {
   // check if packet starts with 0b01
   if (!ChannelData._isChannelDataPacket(bytes)) {
-    debugLog('this is not a ChannelData packet')
+    _log.debug('this is not a ChannelData packet')
     return
   }
   // check if buffer contains enough bytes to parse header
   if (bytes.length < ChannelData.HEADER_LENGTH) {
-    debugLog('not enough bytes to parse ChannelData header, giving up')
+    _log.debug('not enough bytes to parse ChannelData header, giving up')
     return
   }
   // decode channel
@@ -60,11 +70,11 @@ ChannelData.decode = function (bytes, isFrame) {
   var channel = channelBytes.readUInt16BE()
   // check channel number
   if (channel < 0x4000) {
-    debugLog('channel numbers < 0x4000 are reserved and not available for use, since they conflict with the STUN header')
+    _log.debug('channel numbers < 0x4000 are reserved and not available for use, since they conflict with the STUN header')
     return
   }
   if (channel > 0x7FFF) {
-    debugLog('channel numbers > 0x7FFF are unassigned')
+    _log.debug('channel numbers > 0x7FFF are unassigned')
     return
   }
   // decode data length
@@ -72,7 +82,7 @@ ChannelData.decode = function (bytes, isFrame) {
   var dataLength = lengthBytes.readUInt16BE()
   // check if buffer contains enough bytes to parse channel data
   if (bytes.length < dataLength) {
-    debugLog('not enough bytes to parse channel data, giving up')
+    _log.debug('not enough bytes to parse channel data, giving up')
     return
   }
   // get data bytes
@@ -80,7 +90,7 @@ ChannelData.decode = function (bytes, isFrame) {
   // get padding bytes if this is not a frame (i.e. bytes originate from TCP connection) -- and if present, then silently discard them
   var packetLength = ChannelData.HEADER_LENGTH + dataLength + ((4 - dataLength % 4) % 4) // header + data + padding to the nearest multiple of 4
   if (!isFrame && bytes.length < packetLength) {
-    debugLog('not enough bytes to parse channel data padding bytes, giving up')
+    _log.debug('not enough bytes to parse channel data padding bytes, giving up')
     return
   }
   var paddingBytes = bytes.slice(ChannelData.HEADER_LENGTH + dataLength, packetLength) // padding bytes, if any, are silently discarded
@@ -90,9 +100,9 @@ ChannelData.decode = function (bytes, isFrame) {
   result.remainingBytes = bytes.slice(packetLength, bytes.length)
   // do we expect remaining bytes?
   if (isFrame && result.remainingBytes.length !== 0) {
-    var error = 'not expecting remaining bytes after processing full frame packet'
-    errorLog(error)
-    throw new Error(error)
+    var errorMsg = 'not expecting remaining bytes after processing full frame packet'
+    _log.error(errorMsg)
+    throw new Error(errorMsg)
   }
   // done
   return result
