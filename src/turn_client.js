@@ -49,7 +49,6 @@ TurnClient.DEFAULTS = {
   dontFragment: false
 }
 
-
 /** TurnClient opertions */
 
 // Execute allocation
@@ -114,7 +113,7 @@ TurnClient.prototype.allocateP = function () {
       // create and return result
       var result = {
         mappedAddress: self.mappedAddress,
-        relayedAddress: self.relayedAddress,
+        relayedAddress: self.relayedAddress
       }
       if (lifetimeAttr) {
         result.lifetime = lifetimeAttr.duration
