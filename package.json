@@ -16,6 +16,9 @@
   "engines": {
     "node": ">=4.x.x"
   },
+  "browser": {
+    "winston": "./lib/logger"
+  },
   "dependencies": {
     "merge": "^1.2.0",
     "q": "^1.4.1",
@@ -26,6 +29,7 @@
   "devDependencies": {
     "chai": "^3.5.0",
     "chai-as-promised": "^5.2.0",
+    "chrome-dgram": "^3.0.0",
     "mocha": "^2.4.5",
     "publish": "^0.6.0",
     "yargs": "^3.32.0"
@@ -35,7 +39,10 @@
     "url": "git://github.com/microminion/turn-js.git"
   },
   "scripts": {
-    "2npm": "publish",
-    "test": "./node_modules/.bin/mocha test/*.unit.js"
+    "build": "browserify -s TurnClient -e ./ | uglifyjs -c warnings=false -m > turn.min.js",
+    "build-debug": "browserify -s TurnClient -e ./ > turn.debug.js",
+    "size": "npm run build && cat turn.min.js | gzip | wc -c",
+    "test-node": "./node_modules/.bin/mocha test/*.unit.js",
+    "2npm": "publish"
   }
 }
