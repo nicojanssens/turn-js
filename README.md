@@ -9,6 +9,7 @@
 - implements (most of) the features specified in [RFC 5766](https://tools.ietf.org/html/rfc5766)
 - supports TCP and UDP communication
 - offers callback and promise based API
+- can be browserified (to be used in chrome apps)
 
 ## Install
 
