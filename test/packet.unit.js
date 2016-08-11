@@ -1,7 +1,7 @@
 'use strict'
 
-var Attributes = require('../src/attributes')
-var Packet = require('../src/packet')
+var Attributes = require('../lib/attributes')
+var Packet = require('../lib/packet')
 
 var chai = require('chai')
 var expect = chai.expect

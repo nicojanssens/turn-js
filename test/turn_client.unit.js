@@ -2,7 +2,7 @@
 
 var dgram = require('dgram')
 var transports = require('stun-js').transports
-var TurnClient = require('../src/turn_client')
+var TurnClient = require('../lib/turn_client')
 
 var chai = require('chai')
 var chaiAsPromised = require('chai-as-promised')

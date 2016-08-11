@@ -1,10 +1,10 @@
 'use strict'
 
-var Attributes = require('./src/attributes')
-var ChannelData = require('./src/channel_data')
-var Packet = require('./src/packet')
+var Attributes = require('./lib/attributes')
+var ChannelData = require('./lib/channel_data')
+var Packet = require('./lib/packet')
 var transports = require('stun-js').transports
-var TurnClient = require('./src/turn_client')
+var TurnClient = require('./lib/turn_client')
 
 module.exports = function createClient (address, port, user, pwd, transport) {
   return new TurnClient(address, port, user, pwd, transport)
