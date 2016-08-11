@@ -20,6 +20,7 @@
     "winston": "./lib/logger"
   },
   "dependencies": {
+    "debug": "^2.2.0",
     "merge": "^1.2.0",
     "q": "^1.4.1",
     "stun-js": "*",
