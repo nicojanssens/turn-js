@@ -1,4 +1,4 @@
-[![CircleCI](https://circleci.com/gh/MicroMinion/turn-js.svg?style=svg)](https://circleci.com/gh/MicroMinion/turn-js)
+[![CircleCI](https://circleci.com/gh/MicroMinion/turn-js.svg?style=shield)](https://circleci.com/gh/MicroMinion/turn-js)
 
 # Turn-JS
 #### TURN (Traversal Using Relay NAT) library written entirely in JavaScript.
