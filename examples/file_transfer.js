@@ -54,7 +54,7 @@ clientBob.on('relayed-message', function (bytes, peerAddress) {
   if (argv.log) {
     console.log('bob received ' + bytes.length + ' byte(s) from alice')
   }
-  var type = bytes.slice(0, 1).readUInt8()
+  var type = bytes.slice(0, 1).readUInt8(0)
   switch (type) {
     case startMessageType:
       var filenameBytes = bytes.slice(1, bytes.length)
@@ -63,7 +63,7 @@ clientBob.on('relayed-message', function (bytes, peerAddress) {
       break
     case dataMessageType:
       var seqNbBytes = bytes.slice(1, 3)
-      var seqNb = seqNbBytes.readUInt16BE()
+      var seqNb = seqNbBytes.readUInt16BE(0)
       if (seqNb === expSeqNb) {
         expSeqNb++
       } else {
