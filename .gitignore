@@ -1,2 +1,5 @@
 node_modules
 test/all*.sh
+examples/all.sh
+examples/test-mpeg_512kb.mp4
+examples/test.txt
