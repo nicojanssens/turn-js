@@ -20,10 +20,9 @@
     "winston": "winston-browser"
   },
   "dependencies": {
-    "debug": "^2.2.0",
     "merge": "^1.2.0",
     "q": "^1.4.1",
-    "stun-js": "*",
+    "stun-js": "^0.4.0",
     "winston": "^2.2.0",
     "winston-browser": "^1.0.0",
     "winston-meta-wrapper": "^1.0.0"
@@ -33,12 +32,12 @@
     "babelify": "^7.3.0",
     "browserify": "^13.1.0",
     "chai": "^3.5.0",
-    "chai-as-promised": "^5.2.0",
-    "chrome-dgram": "^3.0.0",
-    "mocha": "^2.4.5",
+    "chai-as-promised": "^6.0.0",
+    "chrome-dgram": "^3.0.1",
+    "mocha": "^3.1.2",
     "publish": "^0.6.0",
     "uglify-js": "^2.7.0",
-    "yargs": "^3.32.0"
+    "yargs": "^6.3.0"
   },
   "repository": {
     "type": "git",
