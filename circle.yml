@@ -1,10 +1,24 @@
 machine:
     node:
       version: 4.4.5
+    service:
+      - docker
+
+dependencies:
+  post:
+    - docker info
+
 test:
+  pre:
+    - docker run -d --name=turnserver --restart="on-failure:10" --net=host -p 3478:3478 -p 3478:3478/udp bprodoehl/turnserver
+    - docker exec turnserver /bin/sh -c "echo user=test:test >> /etc/turnserver.conf"
+    - docker exec turnserver /bin/sh -c "echo realm=microminion.io >> /etc/turnserver.conf"
+    - docker restart turnserver
+    - sleep 10
   override:
     - npm run test-node
     - npm run build
+    
 deployment:
     npm:
       branch: master
