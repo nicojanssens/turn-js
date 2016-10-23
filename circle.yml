@@ -10,7 +10,7 @@ dependencies:
 
 test:
   pre:
-    - docker run -d -e EXTERNAL_IP=$TURN_ADDR --name=turnserver --restart="on-failure:10" --net=host -p 3478:3478 -p 3478:3478/udp bprodoehl/turnserver
+    - docker run -d -e EXTERNAL_IP=127.0.0.1 --name=turnserver --restart="on-failure:10" --net=host -p 3478:3478 -p 3478:3478/udp bprodoehl/turnserver
     - sudo lxc-attach -n "$(docker inspect --format "{{.Id}}" turnserver)" -- bash -c "echo user=test:test >> /etc/turnserver.conf"
     - sudo lxc-attach -n "$(docker inspect --format "{{.Id}}" turnserver)" -- bash -c "echo realm=microminion.io >> /etc/turnserver.conf"
     - docker restart turnserver
