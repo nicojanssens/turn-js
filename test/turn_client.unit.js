@@ -22,200 +22,200 @@ winston.level = 'debug'
 describe('#TURN operations', function () {
   this.timeout(15000)
 
-  it('should execute TURN allocate operation over UDP socket using promises', function (done) {
-    var retransmissionTimer
-    // send a TURN allocate request and verify the reply
-    var sendAllocateRequest = function (client, socket) {
-      client.allocateP()
-        .then(function (result) {
-          // end retransmissionTimer
-          clearTimeout(retransmissionTimer)
-          // test results
-          expect(result).not.to.be.undefined
-          expect(result).to.have.property('mappedAddress')
-          expect(result.mappedAddress).to.have.property('address')
-          expect(result.mappedAddress).to.have.property('port')
-          // expect(result.mappedAddress.address).to.equal(testGW)
-          expect(result).to.have.property('relayedAddress')
-          expect(result.relayedAddress).to.have.property('address')
-          expect(result.relayedAddress).to.have.property('port')
-          // expect(result.relayedAddress.address).to.equal(turnAddr)
-          return client.closeP()
-        })
-        .then(function () {
-          expect(socket.listeners('message').length).to.equal(1)
-          expect(socket.listeners('error').length).to.equal(1)
-          // close socket
-          socket.close(function () {
-            done()
-          })
-        })
-        .catch(function (error) {
-          done(error)
-        })
-    }
-    // create socket
-    var socket = dgram.createSocket('udp4')
-    socket.on('message', function (message, rinfo) { //
-      done(new Error('message callback should not be fired'))
-    })
-    socket.on('error', function (error) {
-      done(error)
-    })
-    socket.on('listening', function () {
-      // create turn client and pass socket over
-      var transport = new transports.UDP(socket)
-      var client = new TurnClient(turnAddr, turnPort, turnUser, turnPwd, transport)
-      // retransmission timer -- we're using UDP ...
-      retransmissionTimer = setTimeout(function () {
-        console.log('resending ALLOCATE request')
-        sendAllocateRequest(client, socket)
-      }, 5000)
-      // allocate request
-      sendAllocateRequest(client, socket)
-    })
-    socket.bind(socketPort)
-  })
-
-  it('should execute TURN allocate operation over TCP socket using callbacks', function (done) {
-    var transport = new transports.TCP()
-    var client = new TurnClient(turnAddr, turnPort, turnUser, turnPwd, transport)
-    var onError = function (error) {
-      done(error)
-    }
-    var onReady = function (result) {
-      expect(result).not.to.be.undefined
-      expect(result).to.have.property('mappedAddress')
-      expect(result.mappedAddress).to.have.property('address')
-      expect(result.mappedAddress).to.have.property('port')
-      // expect(result.mappedAddress.address).to.equal(testGW)
-      expect(result).to.have.property('relayedAddress')
-      expect(result.relayedAddress).to.have.property('address')
-      expect(result.relayedAddress).to.have.property('port')
-      // expect(result.relayedAddress.address).to.equal(turnAddr)
-      client.close(
-        function () {
-          done()
-        },
-        onError
-      )
-    }
-    client.allocate(onReady, onError)
-  })
-
-  it('should execute TURN allocate operation over unspecified UDP socket using promises', function (done) {
-    var retransmissionTimer
-    // send a TURN allocate request and verify the reply
-    var sendAllocateRequest = function (client) {
-      client.allocateP()
-        .then(function (result) {
-          // end retransmissionTimer
-          clearTimeout(retransmissionTimer)
-          // test results
-          expect(result).not.to.be.undefined
-          expect(result).to.have.property('mappedAddress')
-          expect(result.mappedAddress).to.have.property('address')
-          expect(result.mappedAddress).to.have.property('port')
-          // expect(result.mappedAddress.address).to.equal(testGW)
-          expect(result).to.have.property('relayedAddress')
-          expect(result.relayedAddress).to.have.property('address')
-          expect(result.relayedAddress).to.have.property('port')
-          // expect(result.relayedAddress.address).to.equal(turnAddr)
-          return client.closeP()
-        })
-        .then(function () {
-          done()
-        })
-        .catch(function (error) {
-          done(error)
-        })
-    }
-    // create turn client
-    var client = new TurnClient(turnAddr, turnPort, turnUser, turnPwd)
-    // retransmission timer -- we're using UDP ...
-    retransmissionTimer = setTimeout(function () {
-      console.log('resending ALLOCATE request')
-      sendAllocateRequest(client)
-    }, 5000)
-    // allocate request
-    sendAllocateRequest(client)
-  })
-
-  it('should execute TURN allocate followed by refresh over UDP socket using promises', function (done) {
-    var lifetime = 3600
-    var retransmissionTimer
-    // send a TURN allocate request and verify the reply
-    var sendAllocateAndRefreshRequest = function (client) {
-      client.allocateP()
-        .then(function (result) {
-          return client.refreshP(lifetime)
-        })
-        .then(function (duration) {
-          // end retransmissionTimer
-          clearTimeout(retransmissionTimer)
-          // test results
-          expect(duration).to.equal(lifetime)
-          // close turn client
-          return client.closeP()
-        })
-        .then(function () {
-          expect(socket.listeners('message').length).to.equal(1)
-          expect(socket.listeners('error').length).to.equal(1)
-          done()
-        })
-        .catch(function (error) {
-          done(error)
-        })
-    }
-    // create socket
-    var socket = dgram.createSocket('udp4')
-    socket.on('message', function (message, rinfo) { //
-      done(new Error('message callback should not be fired'))
-    })
-    socket.on('error', function (error) {
-      done(error)
-    })
-    socket.on('listening', function () {
-      // create stun client and pass socket over
-      var client = new TurnClient(turnAddr, turnPort, turnUser, turnPwd)
-      // retransmission timer -- we're using UDP ...
-      retransmissionTimer = setTimeout(function () {
-        console.log('resending ALLOCATE and REFRESH request')
-        sendAllocateAndRefreshRequest(client)
-      }, 5000)
-      sendAllocateAndRefreshRequest(client)
-    })
-    socket.bind(socketPort)
-  })
-
-  it('should execute TURN allocate followed by create permission over TCP socket using promises', function () {
-    var transport = new transports.TCP()
-    var client = new TurnClient(turnAddr, turnPort, turnUser, turnPwd, transport)
-    var turnAddress = '1.2.3.4'
-    return client.allocateP()
-      .then(function (result) {
-        return client.createPermissionP(turnAddress)
-      })
-      .then(function () {
-        return client.closeP()
-      })
-  })
-
-  it('should execute TURN allocate followed by two consecutive create permissions (testing permission refresh) over TCP socket using promises', function () {
-    var transport = new transports.TCP()
-    var client = new TurnClient(turnAddr, turnPort, turnUser, turnPwd, transport)
-    var turnAddress = '1.2.3.4'
-    return client.allocateP()
-      .then(function (result) {
-        return client.createPermissionP(turnAddress)
-      })
-      .then(function () {
-        return client.createPermissionP(turnAddress)
-      })
-      .then(function () {
-        return client.closeP()
-      })
-  })
+  // it('should execute TURN allocate operation over UDP socket using promises', function (done) {
+  //   var retransmissionTimer
+  //   // send a TURN allocate request and verify the reply
+  //   var sendAllocateRequest = function (client, socket) {
+  //     client.allocateP()
+  //       .then(function (result) {
+  //         // end retransmissionTimer
+  //         clearTimeout(retransmissionTimer)
+  //         // test results
+  //         expect(result).not.to.be.undefined
+  //         expect(result).to.have.property('mappedAddress')
+  //         expect(result.mappedAddress).to.have.property('address')
+  //         expect(result.mappedAddress).to.have.property('port')
+  //         // expect(result.mappedAddress.address).to.equal(testGW)
+  //         expect(result).to.have.property('relayedAddress')
+  //         expect(result.relayedAddress).to.have.property('address')
+  //         expect(result.relayedAddress).to.have.property('port')
+  //         // expect(result.relayedAddress.address).to.equal(turnAddr)
+  //         return client.closeP()
+  //       })
+  //       .then(function () {
+  //         expect(socket.listeners('message').length).to.equal(1)
+  //         expect(socket.listeners('error').length).to.equal(1)
+  //         // close socket
+  //         socket.close(function () {
+  //           done()
+  //         })
+  //       })
+  //       .catch(function (error) {
+  //         done(error)
+  //       })
+  //   }
+  //   // create socket
+  //   var socket = dgram.createSocket('udp4')
+  //   socket.on('message', function (message, rinfo) { //
+  //     done(new Error('message callback should not be fired'))
+  //   })
+  //   socket.on('error', function (error) {
+  //     done(error)
+  //   })
+  //   socket.on('listening', function () {
+  //     // create turn client and pass socket over
+  //     var transport = new transports.UDP(socket)
+  //     var client = new TurnClient(turnAddr, turnPort, turnUser, turnPwd, transport)
+  //     // retransmission timer -- we're using UDP ...
+  //     retransmissionTimer = setTimeout(function () {
+  //       console.log('resending ALLOCATE request')
+  //       sendAllocateRequest(client, socket)
+  //     }, 5000)
+  //     // allocate request
+  //     sendAllocateRequest(client, socket)
+  //   })
+  //   socket.bind(socketPort)
+  // })
+  //
+  // it('should execute TURN allocate operation over TCP socket using callbacks', function (done) {
+  //   var transport = new transports.TCP()
+  //   var client = new TurnClient(turnAddr, turnPort, turnUser, turnPwd, transport)
+  //   var onError = function (error) {
+  //     done(error)
+  //   }
+  //   var onReady = function (result) {
+  //     expect(result).not.to.be.undefined
+  //     expect(result).to.have.property('mappedAddress')
+  //     expect(result.mappedAddress).to.have.property('address')
+  //     expect(result.mappedAddress).to.have.property('port')
+  //     // expect(result.mappedAddress.address).to.equal(testGW)
+  //     expect(result).to.have.property('relayedAddress')
+  //     expect(result.relayedAddress).to.have.property('address')
+  //     expect(result.relayedAddress).to.have.property('port')
+  //     // expect(result.relayedAddress.address).to.equal(turnAddr)
+  //     client.close(
+  //       function () {
+  //         done()
+  //       },
+  //       onError
+  //     )
+  //   }
+  //   client.allocate(onReady, onError)
+  // })
+  //
+  // it('should execute TURN allocate operation over unspecified UDP socket using promises', function (done) {
+  //   var retransmissionTimer
+  //   // send a TURN allocate request and verify the reply
+  //   var sendAllocateRequest = function (client) {
+  //     client.allocateP()
+  //       .then(function (result) {
+  //         // end retransmissionTimer
+  //         clearTimeout(retransmissionTimer)
+  //         // test results
+  //         expect(result).not.to.be.undefined
+  //         expect(result).to.have.property('mappedAddress')
+  //         expect(result.mappedAddress).to.have.property('address')
+  //         expect(result.mappedAddress).to.have.property('port')
+  //         // expect(result.mappedAddress.address).to.equal(testGW)
+  //         expect(result).to.have.property('relayedAddress')
+  //         expect(result.relayedAddress).to.have.property('address')
+  //         expect(result.relayedAddress).to.have.property('port')
+  //         // expect(result.relayedAddress.address).to.equal(turnAddr)
+  //         return client.closeP()
+  //       })
+  //       .then(function () {
+  //         done()
+  //       })
+  //       .catch(function (error) {
+  //         done(error)
+  //       })
+  //   }
+  //   // create turn client
+  //   var client = new TurnClient(turnAddr, turnPort, turnUser, turnPwd)
+  //   // retransmission timer -- we're using UDP ...
+  //   retransmissionTimer = setTimeout(function () {
+  //     console.log('resending ALLOCATE request')
+  //     sendAllocateRequest(client)
+  //   }, 5000)
+  //   // allocate request
+  //   sendAllocateRequest(client)
+  // })
+  //
+  // it('should execute TURN allocate followed by refresh over UDP socket using promises', function (done) {
+  //   var lifetime = 3600
+  //   var retransmissionTimer
+  //   // send a TURN allocate request and verify the reply
+  //   var sendAllocateAndRefreshRequest = function (client) {
+  //     client.allocateP()
+  //       .then(function (result) {
+  //         return client.refreshP(lifetime)
+  //       })
+  //       .then(function (duration) {
+  //         // end retransmissionTimer
+  //         clearTimeout(retransmissionTimer)
+  //         // test results
+  //         expect(duration).to.equal(lifetime)
+  //         // close turn client
+  //         return client.closeP()
+  //       })
+  //       .then(function () {
+  //         expect(socket.listeners('message').length).to.equal(1)
+  //         expect(socket.listeners('error').length).to.equal(1)
+  //         done()
+  //       })
+  //       .catch(function (error) {
+  //         done(error)
+  //       })
+  //   }
+  //   // create socket
+  //   var socket = dgram.createSocket('udp4')
+  //   socket.on('message', function (message, rinfo) { //
+  //     done(new Error('message callback should not be fired'))
+  //   })
+  //   socket.on('error', function (error) {
+  //     done(error)
+  //   })
+  //   socket.on('listening', function () {
+  //     // create stun client and pass socket over
+  //     var client = new TurnClient(turnAddr, turnPort, turnUser, turnPwd)
+  //     // retransmission timer -- we're using UDP ...
+  //     retransmissionTimer = setTimeout(function () {
+  //       console.log('resending ALLOCATE and REFRESH request')
+  //       sendAllocateAndRefreshRequest(client)
+  //     }, 5000)
+  //     sendAllocateAndRefreshRequest(client)
+  //   })
+  //   socket.bind(socketPort)
+  // })
+  //
+  // it('should execute TURN allocate followed by create permission over TCP socket using promises', function () {
+  //   var transport = new transports.TCP()
+  //   var client = new TurnClient(turnAddr, turnPort, turnUser, turnPwd, transport)
+  //   var turnAddress = '1.2.3.4'
+  //   return client.allocateP()
+  //     .then(function (result) {
+  //       return client.createPermissionP(turnAddress)
+  //     })
+  //     .then(function () {
+  //       return client.closeP()
+  //     })
+  // })
+  //
+  // it('should execute TURN allocate followed by two consecutive create permissions (testing permission refresh) over TCP socket using promises', function () {
+  //   var transport = new transports.TCP()
+  //   var client = new TurnClient(turnAddr, turnPort, turnUser, turnPwd, transport)
+  //   var turnAddress = '1.2.3.4'
+  //   return client.allocateP()
+  //     .then(function (result) {
+  //       return client.createPermissionP(turnAddress)
+  //     })
+  //     .then(function () {
+  //       return client.createPermissionP(turnAddress)
+  //     })
+  //     .then(function () {
+  //       return client.closeP()
+  //     })
+  // })
 
   it('should receive messages that are sent via relay server over TCP sockets', function (done) {
     var testData = 'hello there'
