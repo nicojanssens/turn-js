@@ -36,7 +36,7 @@
     "chrome-dgram": "^3.0.1",
     "mocha": "^3.1.2",
     "publish": "^0.6.0",
-    "uglify-js": "^2.7.0",
+    "uglify-js": "^2.7.4",
     "yargs": "^6.3.0"
   },
   "repository": {
