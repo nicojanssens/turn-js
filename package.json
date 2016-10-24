@@ -22,7 +22,7 @@
   "dependencies": {
     "merge": "^1.2.0",
     "q": "^1.4.1",
-    "stun-js": "^0.4.0",
+    "stun-js": "^0.4.1",
     "winston": "^2.2.0",
     "winston-browser": "^1.0.0",
     "winston-meta-wrapper": "^1.0.0"
