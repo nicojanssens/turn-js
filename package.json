@@ -14,7 +14,7 @@
   },
   "license": "MIT",
   "engines": {
-    "node": ">=4.x.x"
+    "node": ">=6.9.0"
   },
   "browser": {
     "winston": "winston-browser"
