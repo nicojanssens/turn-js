@@ -25,6 +25,7 @@
     "stun-js": "^0.4.5",
     "winston": "^2.3.0",
     "winston-browser": "^1.0.0",
+    "winston-debug": "^1.0.0",
     "winston-meta-wrapper": "^1.0.0"
   },
   "devDependencies": {

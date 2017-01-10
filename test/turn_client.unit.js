@@ -16,7 +16,7 @@ var turnUser = process.env.TURN_USER
 var turnPwd = process.env.TURN_PASS
 var socketPort = 33333
 
-var winston = require('winston')
+var winston = require('winston-debug')
 winston.level = 'debug'
 
 describe('#TURN operations', function () {
