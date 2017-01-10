@@ -120,7 +120,6 @@ describe('#TURN operations', function () {
     client.init(function () {
       client.allocate(onReady, onError)
     })
-
   })
 
   it('should execute TURN allocate operation over unspecified UDP socket using promises', function (done) {
@@ -161,7 +160,6 @@ describe('#TURN operations', function () {
       // allocate request
       sendAllocateRequest(client)
     })
-
   })
 
   it('should execute TURN allocate followed by refresh over UDP socket using promises', function (done) {
