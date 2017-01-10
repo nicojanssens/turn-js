@@ -11,7 +11,7 @@ chai.use(chaiAsPromised)
 chai.should()
 
 var turnAddr = process.env.TURN_ADDR
-var turnPort = process.env.TURN_PORT
+var turnPort = parseInt(process.env.TURN_PORT)
 var turnUser = process.env.TURN_USER
 var turnPwd = process.env.TURN_PASS
 var socketPort = 33333
@@ -66,13 +66,15 @@ describe('#TURN operations', function () {
       // create turn client and pass socket over
       var transport = new transports.UDP(socket)
       var client = new TurnClient(turnAddr, turnPort, turnUser, turnPwd, transport)
-      // retransmission timer -- we're using UDP ...
-      retransmissionTimer = setTimeout(function () {
-        console.log('resending ALLOCATE request')
+      client.init(function () {
+        // retransmission timer -- we're using UDP ...
+        retransmissionTimer = setTimeout(function () {
+          console.log('resending ALLOCATE request')
+          sendAllocateRequest(client, socket)
+        }, 5000)
+        // allocate request
         sendAllocateRequest(client, socket)
-      }, 5000)
-      // allocate request
-      sendAllocateRequest(client, socket)
+      })
     })
     socket.bind(socketPort)
   })
@@ -80,6 +82,7 @@ describe('#TURN operations', function () {
   it('should execute TURN allocate operation over TCP socket using callbacks', function (done) {
     var transport = new transports.TCP()
     var client = new TurnClient(turnAddr, turnPort, turnUser, turnPwd, transport)
+
     var onError = function (error) {
       done(error)
     }
@@ -100,7 +103,11 @@ describe('#TURN operations', function () {
         onError
       )
     }
-    client.allocate(onReady, onError)
+
+    client.init(function () {
+      client.allocate(onReady, onError)
+    })
+
   })
 
   it('should execute TURN allocate operation over unspecified UDP socket using promises', function (done) {
@@ -132,13 +139,16 @@ describe('#TURN operations', function () {
     }
     // create turn client
     var client = new TurnClient(turnAddr, turnPort, turnUser, turnPwd)
-    // retransmission timer -- we're using UDP ...
-    retransmissionTimer = setTimeout(function () {
-      console.log('resending ALLOCATE request')
+    client.init(function () {
+      // retransmission timer -- we're using UDP ...
+      retransmissionTimer = setTimeout(function () {
+        console.log('resending ALLOCATE request')
+        sendAllocateRequest(client)
+      }, 5000)
+      // allocate request
       sendAllocateRequest(client)
-    }, 5000)
-    // allocate request
-    sendAllocateRequest(client)
+    })
+
   })
 
   it('should execute TURN allocate followed by refresh over UDP socket using promises', function (done) {
@@ -178,12 +188,14 @@ describe('#TURN operations', function () {
     socket.on('listening', function () {
       // create stun client and pass socket over
       var client = new TurnClient(turnAddr, turnPort, turnUser, turnPwd)
-      // retransmission timer -- we're using UDP ...
-      retransmissionTimer = setTimeout(function () {
-        console.log('resending ALLOCATE and REFRESH request')
+      client.init(function () {
+        // retransmission timer -- we're using UDP ...
+        retransmissionTimer = setTimeout(function () {
+          console.log('resending ALLOCATE and REFRESH request')
+          sendAllocateAndRefreshRequest(client)
+        }, 5000)
         sendAllocateAndRefreshRequest(client)
-      }, 5000)
-      sendAllocateAndRefreshRequest(client)
+      })
     })
     socket.bind(socketPort)
   })
@@ -192,7 +204,10 @@ describe('#TURN operations', function () {
     var transport = new transports.TCP()
     var client = new TurnClient(turnAddr, turnPort, turnUser, turnPwd, transport)
     var turnAddress = '1.2.3.4'
-    return client.allocateP()
+    return client.initP()
+      .then(function () {
+        return client.allocateP()
+      })
       .then(function (result) {
         return client.createPermissionP(turnAddress)
       })
@@ -205,7 +220,10 @@ describe('#TURN operations', function () {
     var transport = new transports.TCP()
     var client = new TurnClient(turnAddr, turnPort, turnUser, turnPwd, transport)
     var turnAddress = '1.2.3.4'
-    return client.allocateP()
+    return client.initP()
+      .then(function () {
+        return client.allocateP()
+      })
       .then(function (result) {
         return client.createPermissionP(turnAddress)
       })
@@ -265,8 +283,14 @@ describe('#TURN operations', function () {
       }
     })
 
-    // allocate relaying session for alice
-    clientAlice.allocateP()
+    // init alice and bob + allocate relaying session for alice
+    clientBob.initP()
+      .then(function () {
+        return clientAlice.initP()
+      })
+      .then(function () {
+        return clientAlice.allocateP()
+      })
       .then(function (allocateAddress) {
         srflxAddressAlice = allocateAddress.mappedAddress
         relayAddressAlice = allocateAddress.relayedAddress
@@ -344,8 +368,14 @@ describe('#TURN operations', function () {
       }
     })
 
-    // allocate relaying session for alice
-    clientAlice.allocateP()
+    // init alice and bob + allocate relaying session for alice
+    clientBob.initP()
+      .then(function () {
+        return clientAlice.initP()
+      })
+      .then(function () {
+        return clientAlice.allocateP()
+      })
       .then(function (allocateAddress) {
         srflxAddressAlice = allocateAddress.mappedAddress
         relayAddressAlice = allocateAddress.relayedAddress

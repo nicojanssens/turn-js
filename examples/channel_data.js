@@ -106,8 +106,14 @@ clientBob.on('relayed-message', function (bytes, peerAddress) {
   sendReply()
 })
 
-// allocate session alice
-clientAlice.allocateP()
+// init alice and bob's client + allocate session alice
+clientBob.initP()
+  .then(function () {
+    return clientAlice.initP()
+  })
+  .then(function () {
+    return clientAlice.allocateP()
+  })
   .then(function (allocateAddress) {
     srflxAddressAlice = allocateAddress.mappedAddress
     relayAddressAlice = allocateAddress.relayedAddress

@@ -20,6 +20,7 @@
     "winston": "winston-browser"
   },
   "dependencies": {
+    "args-js": "^0.10.12",
     "merge": "^1.2.0",
     "q": "^1.4.1",
     "stun-js": "^0.4.5",
