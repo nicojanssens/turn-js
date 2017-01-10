@@ -10,6 +10,19 @@ var expect = chai.expect
 chai.use(chaiAsPromised)
 chai.should()
 
+if (!process.env.TURN_ADDR) {
+  throw new Error('TURN_ADDR undefined -- giving up')
+}
+if (!process.env.TURN_PORT) {
+  throw new Error('TURN_PORT undefined -- giving up')
+}
+if (!process.env.TURN_USER) {
+  throw new Error('TURN_USER undefined -- giving up')
+}
+if (!process.env.TURN_PASS) {
+  throw new Error('TURN_PASS undefined -- giving up')
+}
+
 var turnAddr = process.env.TURN_ADDR
 var turnPort = parseInt(process.env.TURN_PORT)
 var turnUser = process.env.TURN_USER
