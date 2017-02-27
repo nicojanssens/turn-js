@@ -331,6 +331,104 @@ describe('#TURN operations', function () {
       })
   })
 
+  it('should concurrently receive messages that are sent via relay server over TCP sockets, using multiple clients', function (done) {
+    var nbSessions = 10
+    var nbSessionEnded = 0
+
+    var runTestSession = function (onDone) {
+      var testData = 'hello there'
+      var testRuns = 10
+      var messagesReceived = 0
+
+      var clientAlice = new TurnClient(turnAddr, turnPort, turnUser, turnPwd, new transports.TCP())
+      var clientBob = new TurnClient(turnAddr, turnPort, turnUser, turnPwd, new transports.TCP())
+      var srflxAddressAlice, srflxAddressBob, relayAddressAlice, relayAddressBob
+
+      var sendTestMessageFromAliceToBob = function () {
+        var bytes = new Buffer(testData)
+        clientAlice.sendToRelay(
+          bytes,
+          relayAddressBob.address,
+          relayAddressBob.port,
+          function () {
+            console.log('message sent to ' + relayAddressBob.address + ':' + relayAddressBob.port)
+          }, // on success
+          function (error) {
+            done(error)
+          }
+        )
+      }
+
+      // subscribe to incoming messages
+      clientBob.on('relayed-message', function (bytes, peerAddress) {
+        var message = bytes.toString()
+        expect(message).to.equal(testData)
+        console.log('receiving test message ' + message)
+        messagesReceived++
+        if (messagesReceived === testRuns) {
+          clientBob.closeP()
+            .then(function () {
+              return clientAlice.closeP()
+            })
+            .then(function () {
+              onDone()
+            })
+            .catch(function (error) {
+              done(error)
+            })
+        } else {
+          sendTestMessageFromAliceToBob()
+        }
+      })
+
+      // init alice and bob + allocate relaying session for alice
+      clientBob.initP()
+        .then(function () {
+          return clientAlice.initP()
+        })
+        .then(function () {
+          return clientAlice.allocateP()
+        })
+        .then(function (allocateAddress) {
+          srflxAddressAlice = allocateAddress.mappedAddress
+          relayAddressAlice = allocateAddress.relayedAddress
+          console.log("alice's srflx address = " + srflxAddressAlice.address + ':' + srflxAddressAlice.port)
+          console.log("alice's relay address = " + relayAddressAlice.address + ':' + relayAddressAlice.port)
+          // allocate relaying session for bob
+          return clientBob.allocateP()
+        })
+        .then(function (allocateAddress) {
+          srflxAddressBob = allocateAddress.mappedAddress
+          relayAddressBob = allocateAddress.relayedAddress
+          console.log("bob's address = " + srflxAddressBob.address + ':' + srflxAddressBob.port)
+          console.log("bob's relay address = " + relayAddressBob.address + ':' + relayAddressBob.port)
+          // create permission for alice to send messages to bob
+          return clientBob.createPermissionP(relayAddressAlice.address)
+        })
+        .then(function () {
+          // create permission for bob to send messages to alice
+          return clientAlice.createPermissionP(relayAddressBob.address)
+        })
+        .then(function () {
+          // send test message
+          sendTestMessageFromAliceToBob()
+        })
+        .catch(function (error) {
+          done(error)
+        })
+    }
+
+    for (var i = 0; i < nbSessions; i++) {
+      runTestSession(function () {
+        nbSessionEnded++
+        if (nbSessionEnded === nbSessions) {
+          done()
+        }
+      })
+    }
+
+  })
+
   it('should execute TURN channel binding and receive messages sent via these channels over TCP sockets using promises', function (done) {
     var testData = 'hello there'
     var testRuns = 10
