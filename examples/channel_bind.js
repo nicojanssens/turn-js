@@ -47,7 +47,7 @@ var testRuns = 10
 var messagesSent = 0
 
 var sendRequest = function (onSuccess) {
-  var bytes = new Buffer(testQuestion)
+  var bytes = Buffer.from(testQuestion)
   clientAlice.sendToChannel(
     bytes,
     channelBob,
@@ -64,7 +64,7 @@ var sendRequest = function (onSuccess) {
 }
 
 var sendReply = function () {
-  var bytes = new Buffer(testAnswer)
+  var bytes = Buffer.from(testAnswer)
   clientBob.sendToChannel(
     bytes,
     channelAlice,

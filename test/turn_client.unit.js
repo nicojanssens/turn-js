@@ -258,7 +258,7 @@ describe('#TURN operations', function () {
     var srflxAddressAlice, srflxAddressBob, relayAddressAlice, relayAddressBob
 
     var sendTestMessageFromAliceToBob = function () {
-      var bytes = new Buffer(testData)
+      var bytes = Buffer.from(testData)
       clientAlice.sendToRelay(
         bytes,
         relayAddressBob.address,
@@ -345,7 +345,7 @@ describe('#TURN operations', function () {
       var srflxAddressAlice, srflxAddressBob, relayAddressAlice, relayAddressBob
 
       var sendTestMessageFromAliceToBob = function () {
-        var bytes = new Buffer(testData)
+        var bytes = Buffer.from(testData)
         clientAlice.sendToRelay(
           bytes,
           relayAddressBob.address,
@@ -442,7 +442,7 @@ describe('#TURN operations', function () {
     var channelId
 
     var sendTestMessageFromAliceToBob = function () {
-      var bytes = new Buffer(testData)
+      var bytes = Buffer.from(testData)
       clientAlice.sendToChannel(
         bytes,
         channelId,

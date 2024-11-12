@@ -137,9 +137,9 @@ clientBob.initP()
     if (argv.log) {
       console.log('alice sends filename ' + filename + ' to bob')
     }
-    var typeByte = new Buffer(1)
+    var typeByte = Buffer.alloc(1)
     typeByte.writeUInt8(startMessageType)
-    var filenameBytes = new Buffer(filename)
+    var filenameBytes = Buffer.from(filename)
     var bytes = Buffer.concat([typeByte, filenameBytes])
     return clientAlice.sendToChannelP(bytes, channelBob)
   })
@@ -148,9 +148,9 @@ clientBob.initP()
     // create file readstream and send chunks
     readStream = fs.createReadStream(argv.file, { highWaterMark: bufferSize })
     readStream.on('data', function (chunk) {
-      var typeByte = new Buffer(1)
+      var typeByte = Buffer.alloc(1)
       typeByte.writeUInt8(dataMessageType)
-      var seqNbBytes = new Buffer(2)
+      var seqNbBytes = Buffer.alloc(2)
       seqNbBytes.writeUInt16BE(chunkNb)
       var bytes = Buffer.concat([typeByte, seqNbBytes, chunk])
       readStream.pause()
@@ -171,7 +171,7 @@ clientBob.initP()
     })
     readStream.on('end', function () {
       // send end message
-      var typeByte = new Buffer(1)
+      var typeByte = Buffer.alloc(1)
       typeByte.writeUInt8(endMessageType)
       clientAlice.sendToChannelP(typeByte, channelBob)
         .then(function () {

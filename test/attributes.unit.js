@@ -48,7 +48,7 @@ describe('#TURN attributes', function () {
 
   it('should encode and decode a data attribute', function (done) {
     var testData = 'this is such an awesome library'
-    var testBytes = new Buffer(testData)
+    var testBytes = Buffer.from(testData)
     var Data = Attributes.Data
     var data = new Data(testBytes)
     var bytes = data.encode()
@@ -119,7 +119,7 @@ describe('#TURN attributes', function () {
 })
 
 function createTestHeaderBytes (magic, tid) {
-  var encodedHeader = new Buffer(Packet.HEADER_LENGTH)
+  var encodedHeader = Buffer.alloc(Packet.HEADER_LENGTH)
   var type = Packet.METHOD.ALLOCATE | Packet.TYPE.REQUEST
   var length = 0
   encodedHeader.writeUInt16BE((type & 0x3fff), 0)
